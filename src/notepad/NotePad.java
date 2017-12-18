@@ -20,16 +20,17 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.GridLayout;
+import java.io.BufferedReader;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.FileReader;
+import java.io.IOException; 
 import java.util.prefs.Preferences;
 import net.miginfocom.swing.MigLayout;
 import javax.swing.JLabel;
 import java.awt.Dimension;
 import javax.swing.JTree;
 import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+import java.awt.event.ActionEvent; 
 
 /**
  * @author ciunas
@@ -38,12 +39,12 @@ import java.awt.event.ActionEvent;
 public class NotePad {
 
 	private JFrame frame;
-	private JLabel lblNewLabel;
 	private JPanel panel_4;
 	private static DefaultMutableTreeNode root;
 	private static DefaultTreeModel treeModel;
 	private JTree tree;
 	private Preferences prefs;
+	private String fileLocation;
 
 	/**
 	 * Launch the application.
@@ -105,7 +106,8 @@ public class NotePad {
 		treeModel = new DefaultTreeModel(root);
 
 		frame = new JFrame();
-		frame.setBounds(100, 100, 818, 719);
+		frame.setMinimumSize(new Dimension(400, 400));
+		frame.setBounds(100, 100, 1054, 771);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		JPanel panel = new JPanel();
@@ -131,18 +133,15 @@ public class NotePad {
 		JTextArea textArea = new JTextArea();
 		textArea.setForeground(Color.GREEN);
 		textArea.setBackground(Color.BLACK);
-		textArea.setFont(new Font("Cantarell", Font.PLAIN, 13));
+		textArea.setFont(new Font("SansSerif", Font.PLAIN, 15));
 		scrollPane.setViewportView(textArea);
 
 		JPanel panel_3 = new JPanel();
+		panel_3.setPreferredSize(new Dimension(200, 10));
 		panel_3.setBackground(Color.LIGHT_GRAY);
 		panel_3.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
 		panel.add(panel_3, BorderLayout.WEST);
 		panel_3.setLayout(new BorderLayout(0, 0));
-
-		lblNewLabel = new JLabel("Tree");
-		lblNewLabel.setPreferredSize(new Dimension(50, 25));
-		panel_3.add(lblNewLabel, BorderLayout.NORTH);
 
 		panel_4 = new JPanel();
 		panel_3.add(panel_4, BorderLayout.CENTER);
@@ -153,39 +152,52 @@ public class NotePad {
 		tree = new JTree(treeModel);
 		tree.setShowsRootHandles(true);
 		tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-		
-				tree.addTreeSelectionListener(new TreeSelectionListener() {
-					@Override
-					public void valueChanged(TreeSelectionEvent e) {
-						DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
-						Object userObject = selectedNode.getUserObject();
-						System.out.println(rootDir + userObject);
-					}
-				});
+		tree.addTreeSelectionListener(new TreeSelectionListener() {
+			@Override
+			public void valueChanged(TreeSelectionEvent e) {
+				DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+				Object userObject = selectedNode.getUserObject();
+				fileLocation = rootDir + "/" + userObject;
+			}
+		});
 
 		JPanel panel_5 = new JPanel();
 		scrollPane_1.setViewportView(panel_5);
 		panel_5.setLayout(new BorderLayout(0, 0));
+		panel_5.add(tree, BorderLayout.CENTER);
+	
+		JPanel panel_7 = new JPanel();
+		panel_5.add(panel_7, BorderLayout.NORTH);
+		panel_7.setLayout(new MigLayout("", "[grow][grow][grow]", "[]"));
+		
+		JLabel lblNewLabel = new JLabel("Tree");
+		panel_7.add(lblNewLabel, "cell 0 0 2 1");
 
 		JButton btnNewButton = new JButton("Set Root");
+		panel_7.add(btnNewButton, "cell 2 0");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				changeRoot();
 			}
 		});
-		panel_5.add(btnNewButton, BorderLayout.SOUTH);
-
-		panel_5.add(tree, BorderLayout.CENTER);
 
 		JPanel panel_6 = new JPanel();
 		panel_4.add(panel_6, "cell 0 2,grow");
 		panel_6.setLayout(new GridLayout(2, 1, 0, 0));
 
-		JButton btnNewButton_1 = new JButton("New button");
+		JButton btnNewButton_1 = new JButton("Open");
+		btnNewButton_1.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				 readFile(fileLocation,  textArea);
+				 
+				 tabbedPane.addTab("Tab 2", null, new JLabel("This is tab 2"));
+				 
+			}
+		});
 		panel_6.add(btnNewButton_1);
 
-		JButton button = new JButton("New button");
-		panel_6.add(button);
+		JButton btnNewFile = new JButton("New File");
+		panel_6.add(btnNewFile);
 
 		getList(root, fileRoot);
 	}
@@ -230,4 +242,31 @@ public class NotePad {
 			prefs.put(id, value);
 		return "";
 	}
+	
+	
+	/**Read a file from specified location and write to specified JTextArea
+	 * @param location
+	 * @param jtextarea
+	 */
+	public void readFile(String location, JTextArea jtextarea ) {
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+
+				try (BufferedReader br = new BufferedReader(new FileReader(location)))
+				{
+					String line;
+					while ((line = br.readLine()) != null) {
+						jtextarea.append(line + "\n");
+					}
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+		
+		
+	
 }
