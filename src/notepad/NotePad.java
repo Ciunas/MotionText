@@ -23,7 +23,8 @@ import java.awt.GridLayout;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException; 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.prefs.Preferences;
 import net.miginfocom.swing.MigLayout;
 import javax.swing.JLabel;
@@ -32,6 +33,10 @@ import javax.swing.JTree;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent; 
 
+/**
+ * @author ciunas
+ *
+ */
 /**
  * @author ciunas
  *
@@ -45,7 +50,8 @@ public class NotePad {
 	private JTree tree;
 	private Preferences prefs;
 	private String fileLocation;
-
+	int i = 0;
+	HashMap <String, DataNode> mapper = new HashMap<String, DataNode>();
 	/**
 	 * Launch the application.
 	 */
@@ -98,7 +104,7 @@ public class NotePad {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-
+		
 		String rootDir = setGetPreference("Root", "", "get");
 		File fileRoot = new File(rootDir);
 
@@ -126,15 +132,6 @@ public class NotePad {
 
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		panel_2.add(tabbedPane, BorderLayout.CENTER);
-
-		JScrollPane scrollPane = new JScrollPane();
-		tabbedPane.addTab("Blank", null, scrollPane, null);
-
-		JTextArea textArea = new JTextArea();
-		textArea.setForeground(Color.GREEN);
-		textArea.setBackground(Color.BLACK);
-		textArea.setFont(new Font("SansSerif", Font.PLAIN, 15));
-		scrollPane.setViewportView(textArea);
 
 		JPanel panel_3 = new JPanel();
 		panel_3.setPreferredSize(new Dimension(200, 10));
@@ -180,29 +177,49 @@ public class NotePad {
 				changeRoot();
 			}
 		});
-
+ 
 		JPanel panel_6 = new JPanel();
 		panel_4.add(panel_6, "cell 0 2,grow");
 		panel_6.setLayout(new GridLayout(2, 1, 0, 0));
-
+		 
 		JButton btnNewButton_1 = new JButton("Open");
 		btnNewButton_1.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				 readFile(fileLocation,  textArea);
-				 
-				 tabbedPane.addTab("Tab 2", null, new JLabel("This is tab 2"));
-				 
+			public void actionPerformed(ActionEvent arg0) {			 
+				 addTab(tabbedPane);
 			}
 		});
 		panel_6.add(btnNewButton_1);
 
 		JButton btnNewFile = new JButton("New File");
 		panel_6.add(btnNewFile);
-
+		
 		getList(root, fileRoot);
 	}
 
-	public void changeRoot() {
+	
+	/**Adds a new tab to the JTabPane, with a close button.
+	 * @param tabbedPane
+	 */
+	protected void addTab(JTabbedPane tabbedPane) {
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				DataNode dn = new DataNode(1);
+				tabbedPane.addTab("Tab 2", null, dn.getJs());
+				tabbedPane.setTabComponentAt(i, new ButtonTabComponent(tabbedPane));
+				dn.getJs().setViewportView(dn.getJta());
+				mapper.put("hello", dn);
+				readFile(fileLocation,  dn.getJta());	
+				i++;
+			}
+		});
+	}
+
+	
+	/**Sets the root directory for user.
+	 * 
+	 */
+	protected void changeRoot() {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
@@ -214,28 +231,36 @@ public class NotePad {
 		});
 	}
 
-	public void getList(DefaultMutableTreeNode node, File f) {
-
-		File[] files = f.listFiles();
+	
+	/**Builds tree list for display.
+	 * @param node
+	 * @param file
+	 */
+	protected void getList(DefaultMutableTreeNode node, File file) {
+		File[] files = file.listFiles();
 		if (files == null)
 			return;
-
-		for (File file : files) {
-			DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(new FileNode(file));
+		for (File f : files) {
+			DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(new FileNode(f));
 			node.add(childNode);
 
-			if (file.isHidden()) {
+			if (f.isHidden()) {
 
-			} else if (file.isDirectory()) {
-				getList(childNode, file);
+			} else if (f.isDirectory()) {
+				getList(childNode, f);
 			}
 		}
 	}
 
-	public String setGetPreference(String id, String value, String SetGet) {
-		// This will define a node in which the preferences can be stored
+	
+	/**Checks for user settings, returns setting if present
+	 * @param id
+	 * @param value
+	 * @param SetGet
+	 * @return
+	 */
+	protected String setGetPreference(String id, String value, String SetGet) { 
 		prefs = Preferences.userRoot().node(this.getClass().getName());
-
 		if (SetGet.equals("get")) {
 			return (prefs.get(id, ""));
 		} else
@@ -248,7 +273,7 @@ public class NotePad {
 	 * @param location
 	 * @param jtextarea
 	 */
-	public void readFile(String location, JTextArea jtextarea ) {
+	protected void readFile(String location, JTextArea jtextarea ) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
