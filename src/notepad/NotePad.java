@@ -5,15 +5,15 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import javax.swing.JTabbedPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.JScrollPane;  
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import java.awt.Font;
+import javax.swing.UnsupportedLookAndFeelException; 
 import java.awt.Color;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.border.BevelBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -21,9 +21,13 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.GridLayout;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileReader; 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.prefs.Preferences;
 import net.miginfocom.swing.MigLayout;
@@ -37,26 +41,30 @@ import java.awt.event.ActionEvent;
  * @author ciunas
  *
  */
-/**
- * @author ciunas
- *
- */
+ 
 public class NotePad {
 
-	private JFrame frame;
-	private JPanel panel_4;
+	HashMap <String, DataNode> mapper = new HashMap<String, DataNode>();
 	private static DefaultMutableTreeNode root;
 	private static DefaultTreeModel treeModel;
-	private JTree tree;
 	private Preferences prefs;
-	private String fileLocation;
+	private String filePath; 
+	@SuppressWarnings("unused")
+	private String fileName;
+	@SuppressWarnings("unused")
+	private String activeTab;
+	JFrame frame;
+	JTree tree;
 	int i = 0;
-	HashMap <String, DataNode> mapper = new HashMap<String, DataNode>();
+	
+	
 	/**
 	 * Launch the application.
+	 * @throws InterruptedException 
+	 * @throws InvocationTargetException 
 	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
+	public static void main(String[] args) throws InvocationTargetException, InterruptedException {
+		EventQueue.invokeAndWait(new Runnable() {
 			public void run() {
 				// getResourceAsFile();
 				try {
@@ -105,12 +113,12 @@ public class NotePad {
 	 */
 	private void initialize() {
 		
-		String rootDir = setGetPreference("Root", "", "get");
+		String rootDir = setOrGetPref("Root", "", "get");
 		File fileRoot = new File(rootDir);
 
 		root = new DefaultMutableTreeNode(new FileNode(fileRoot));
-		treeModel = new DefaultTreeModel(root);
-
+		treeModel = new DefaultTreeModel(root);  
+		
 		frame = new JFrame();
 		frame.setMinimumSize(new Dimension(400, 400));
 		frame.setBounds(100, 100, 1054, 771);
@@ -132,6 +140,14 @@ public class NotePad {
 
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		panel_2.add(tabbedPane, BorderLayout.CENTER);
+		ChangeListener changeListener = new ChangeListener() {
+			public void stateChanged(ChangeEvent changeEvent) {
+				JTabbedPane sourceTabbedPane = (JTabbedPane) changeEvent.getSource();
+				int index = sourceTabbedPane.getSelectedIndex();
+				activeTab = sourceTabbedPane.getTitleAt(index);
+			}
+		};
+		tabbedPane.addChangeListener(changeListener);
 
 		JPanel panel_3 = new JPanel();
 		panel_3.setPreferredSize(new Dimension(200, 10));
@@ -140,12 +156,14 @@ public class NotePad {
 		panel.add(panel_3, BorderLayout.WEST);
 		panel_3.setLayout(new BorderLayout(0, 0));
 
-		panel_4 = new JPanel();
+		JPanel panel_4 = new JPanel();
 		panel_3.add(panel_4, BorderLayout.CENTER);
 		panel_4.setLayout(new MigLayout("", "[grow]", "[grow][grow][grow]"));
 		
 		JScrollPane scrollPane_1 = new JScrollPane();
 		panel_4.add(scrollPane_1, "cell 0 0 1 2,grow");
+		
+		
 		tree = new JTree(treeModel);
 		tree.setShowsRootHandles(true);
 		tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -153,8 +171,12 @@ public class NotePad {
 			@Override
 			public void valueChanged(TreeSelectionEvent e) {
 				DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
-				Object userObject = selectedNode.getUserObject();
-				fileLocation = rootDir + "/" + userObject;
+				Object userObject = selectedNode.getUserObject(); 
+				if(rootDir.contains(userObject.toString())) {
+					filePath = rootDir;
+				}else
+					filePath = rootDir + "/" + userObject;
+				fileName = userObject.toString(); 
 			}
 		});
 
@@ -175,6 +197,8 @@ public class NotePad {
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				changeRoot();
+				//treeModel.reload(root);
+				//getList(root, fileRoot);
 			}
 		});
  
@@ -184,37 +208,131 @@ public class NotePad {
 		 
 		JButton btnNewButton_1 = new JButton("Open");
 		btnNewButton_1.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {			 
-				 addTab(tabbedPane);
+			public void actionPerformed(ActionEvent arg0) {			  
+				 addTab(tabbedPane, filePath); 			}
+		});
+		
+		JButton btnNewButton_2 = new JButton("New Tab");
+		btnNewButton_2.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setDialogTitle("Specify a file to save");
+				int userSelection = fileChooser.showSaveDialog(frame);
+
+				if (userSelection == JFileChooser.APPROVE_OPTION) {
+					File fileToSave = fileChooser.getSelectedFile();
+					try {
+						fileToSave.createNewFile();
+					} catch (IOException e) { 
+						e.printStackTrace();
+					} 
+				}
 			}
 		});
+		panel_6.add(btnNewButton_2);
 		panel_6.add(btnNewButton_1);
 
-		JButton btnNewFile = new JButton("New File");
+		JButton btnNewFile = new JButton("Save");
+		btnNewFile.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) { 
+				saveFile(mapper.get(activeTab));
+			}
+		});
 		panel_6.add(btnNewFile);
 		
+		JButton btnNewButton_3 = new JButton("Change Root");
+		btnNewButton_3.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				DefaultMutableTreeNode rootNode2 = new DefaultMutableTreeNode(new File("/home/ciunas/Documents/Work"));
+				treeModel.setRoot(rootNode2);
+				treeModel.reload();
+			}
+		});
+		panel_6.add(btnNewButton_3);
+	
 		getList(root, fileRoot);
+	}
+	
+	
+	/**Reads text form a JTextArea and writes to specified file.
+	 * @param filePath
+	 * @param jta
+	 */
+	public void saveFile(DataNode dataNode) { 
+		System.out.println(dataNode.getLocation());
+		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(dataNode.getLocation()))){  
+			bw.write(dataNode.getJta().getText());  
+		} catch (Exception e) { 
+			System.err.println("Error: " + e.getMessage());
+		}
+	}
+	
+	
+	/**Checks for user settings, returns setting if present
+	 * @param id
+	 * @param value
+	 * @param SetGet
+	 * @return
+	 */
+	protected String setOrGetPref(String id, String value, String SetGet) { 
+		prefs = Preferences.userRoot().node(this.getClass().getName());
+		if (SetGet.equals("get")) {
+			return (prefs.get(id, ""));
+		} else
+			prefs.put(id, value);
+		return "";
 	}
 
 	
 	/**Adds a new tab to the JTabPane, with a close button.
 	 * @param tabbedPane
+	 * @throws InterruptedException 
+	 * @throws InvocationTargetException 
 	 */
-	protected void addTab(JTabbedPane tabbedPane) {
+	protected void addTab(JTabbedPane tabbedPane, String location) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				DataNode dn = new DataNode(1);
-				tabbedPane.addTab("Tab 2", null, dn.getJs());
-				tabbedPane.setTabComponentAt(i, new ButtonTabComponent(tabbedPane));
-				dn.getJs().setViewportView(dn.getJta());
-				mapper.put("hello", dn);
-				readFile(fileLocation,  dn.getJta());	
-				i++;
+				String line;
+				DataNode dn = new DataNode(filePath);
+				tabbedPane.addTab(fileName, null, dn.getJs());
+				tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, new ButtonTabComponent(tabbedPane));
+				tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1); 	
+				try (BufferedReader br = new BufferedReader(new FileReader(location))) {
+					while ((line = br.readLine()) != null) {
+						dn.getJta().append(line + "\n");
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				mapper.put(fileName, dn);
 			}
 		});
 	}
 
+	
+	/**Adds a new tab to the JTabPane, with a close button.
+	 * @param tabbedPane
+	 * @throws InterruptedException 
+	 * @throws InvocationTargetException 
+	 */
+	protected void addTab(JTabbedPane tabbedPane)  {
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				//System.out.println(fileName);
+				DataNode dn = new DataNode(activeTab);
+				tabbedPane.addTab(fileName, null, dn.getJs());				
+				tabbedPane.setTabComponentAt(tabbedPane.getTabCount()-1, new ButtonTabComponent(tabbedPane));
+				tabbedPane.setSelectedIndex(tabbedPane.getTabCount()-1);
+				dn.getJs().setViewportView(dn.getJta());   
+				//System.out.println(fileName);
+				mapper.put(fileName, dn); 
+				//System.out.println(mapper.get);
+				//tabbedPane.get
+			}
+		}); 
+	}
 	
 	/**Sets the root directory for user.
 	 * 
@@ -226,7 +344,7 @@ public class NotePad {
 				JFileChooser f = new JFileChooser();
 				f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 				f.showSaveDialog(null);
-				setGetPreference("Root", f.getSelectedFile().toString(), "set");
+				setOrGetPref("Root", f.getSelectedFile().toString(), "set");   //save root dir to preferences
 			}
 		});
 	}
@@ -245,53 +363,37 @@ public class NotePad {
 			node.add(childNode);
 
 			if (f.isHidden()) {
-
 			} else if (f.isDirectory()) {
 				getList(childNode, f);
 			}
 		}
-	}
-
-	
-	/**Checks for user settings, returns setting if present
-	 * @param id
-	 * @param value
-	 * @param SetGet
-	 * @return
-	 */
-	protected String setGetPreference(String id, String value, String SetGet) { 
-		prefs = Preferences.userRoot().node(this.getClass().getName());
-		if (SetGet.equals("get")) {
-			return (prefs.get(id, ""));
-		} else
-			prefs.put(id, value);
-		return "";
 	}
 	
 	
 	/**Read a file from specified location and write to specified JTextArea
 	 * @param location
 	 * @param jtextarea
-	 */
-	protected void readFile(String location, JTextArea jtextarea ) {
-		EventQueue.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-
+	 *//*
+	protected void readFile(String location, DataNode dataNode ) {
+//		EventQueue.invokeLater(new Runnable() {
+//			@Override
+//			public void run() 
+				System.out.println(location);
+				//System.out.println(dataNode.getNumber());
 				try (BufferedReader br = new BufferedReader(new FileReader(location)))
 				{
 					String line;
 					while ((line = br.readLine()) != null) {
-						jtextarea.append(line + "\n");
-					}
-
+						dataNode.getJta().append(line + "\n");
+					} 
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-			}
-		});
+//			}
+//		}); 
+		
 	}
 		
-		
+		*/
 	
 }
