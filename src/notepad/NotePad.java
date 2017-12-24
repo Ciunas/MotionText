@@ -41,7 +41,8 @@ import java.awt.event.ActionEvent;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JMenu; 
+import javax.swing.JMenu;
+import java.awt.Font; 
 
 /**
  * @author ciunas
@@ -107,9 +108,11 @@ public class NotePad {
 
 		JPanel panel_1 = new JPanel();
 		panel.add(panel_1, BorderLayout.SOUTH);
+		panel_1.setLayout(new BorderLayout(0, 0));
 		
-		JLabel lblNewLabel_1 = new JLabel("Made By: Ciunas Bennet");
-		panel_1.add(lblNewLabel_1);
+		JLabel lblNewLabel_1 = new JLabel("Made By: Ciunas Bennett.");
+		lblNewLabel_1.setFont(new Font("Dialog", Font.ITALIC, 12));
+		panel_1.add(lblNewLabel_1, BorderLayout.EAST);
 
 		JPanel panel_2 = new JPanel();
 		panel.add(panel_2, BorderLayout.CENTER);
@@ -183,16 +186,31 @@ public class NotePad {
 		JButton btnNewButton_2 = new JButton("New Tab");
 		btnNewButton_2.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				JFileChooser fileChooser = new JFileChooser();
-				fileChooser.setDialogTitle("Specify save location.");
-				int userSelection = fileChooser.showSaveDialog(frame);
-				if (userSelection == JFileChooser.APPROVE_OPTION) {
-					File fileToSave = fileChooser.getSelectedFile();
-					try {
-						fileToSave.createNewFile();
-					} catch (IOException e) { 
-						e.printStackTrace();
-					} 
+
+				int reply = JOptionPane.showConfirmDialog(frame, "Save to working directory:", "Save",
+						JOptionPane.YES_NO_OPTION);
+				if (reply == JOptionPane.YES_OPTION) {
+					String name = JOptionPane.showInputDialog(frame, "File Name:");
+					if (!name.isEmpty()) {
+						File fileToSave = new File(setOrGetPref("Root", null, "get") + "/" + name);
+						try {
+							fileToSave.createNewFile();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				} else {
+					JFileChooser fileChooser = new JFileChooser();
+					fileChooser.setDialogTitle("Specify save location.");
+					int userSelection = fileChooser.showSaveDialog(frame);
+					if (userSelection == JFileChooser.APPROVE_OPTION) {
+						File fileToSave = fileChooser.getSelectedFile();
+						try {
+							fileToSave.createNewFile();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
 				}
 				setTreeWD("display");
 			}
@@ -208,10 +226,19 @@ public class NotePad {
 		});
 		panel_6.add(btnNewFile);
 
-		JButton btnNewButton_3 = new JButton("Blank");
+		JButton btnNewButton_3 = new JButton("Delete");
 		btnNewButton_3.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				System.out.println("Nothing happening here");
+				int reply = JOptionPane.showConfirmDialog(frame, "Delete Following File: " + fileName,
+						"Delete", JOptionPane.YES_NO_OPTION);
+				if (reply == JOptionPane.YES_OPTION) {
+					File file = new File(filePath);
+					if (file.delete()) {
+						JOptionPane.showMessageDialog(frame, "Deleted");
+						setTreeWD("display");
+					}else
+						JOptionPane.showMessageDialog(frame, "Error fiel not Deleted:");
+				}
 			}
 		});
 		panel_6.add(btnNewButton_3); 
@@ -380,6 +407,8 @@ public class NotePad {
 	}
 	
 	
+	/**helper class for JTree Creation
+	 */
 	class FileTreeCellRenderer extends DefaultTreeCellRenderer {
 		private static final long serialVersionUID = 1L;
 		@Override
@@ -393,6 +422,5 @@ public class NotePad {
 			}
 			return super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
 		}
-	}
-	
+	}	
 }
