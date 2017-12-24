@@ -123,9 +123,11 @@ public class NotePad {
 		ChangeListener changeListener = new ChangeListener() {
 			public void stateChanged(ChangeEvent changeEvent) {
 				JTabbedPane sourceTabbedPane = (JTabbedPane) changeEvent.getSource();
-				int index = sourceTabbedPane.getSelectedIndex();
-				activeTab = sourceTabbedPane.getTitleAt(index);
-				System.out.println(activeTab);
+				int index = sourceTabbedPane.getSelectedIndex(); 
+				if(index == -1) {
+					activeTab = ""; 
+				} else
+					activeTab = sourceTabbedPane.getTitleAt(index);
 			}
 		};
 		tabbedPane.addChangeListener(changeListener);
@@ -191,7 +193,7 @@ public class NotePad {
 						JOptionPane.YES_NO_OPTION);
 				if (reply == JOptionPane.YES_OPTION) {
 					String name = JOptionPane.showInputDialog(frame, "File Name:");
-					if (!name.isEmpty()) {
+					if (name != null && !name.isEmpty()) {
 						File fileToSave = new File(setOrGetPref("Root", null, "get") + "/" + name);
 						try {
 							fileToSave.createNewFile();
@@ -220,8 +222,11 @@ public class NotePad {
 
 		JButton btnNewFile = new JButton("Save");
 		btnNewFile.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) { 
-				saveFile(mapper.get(activeTab));
+			public void actionPerformed(ActionEvent e) {
+				if(activeTab != null && !activeTab.isEmpty()) {
+					saveFile(mapper.get(activeTab));
+				} else
+					JOptionPane.showMessageDialog(frame, "No File to Save!");
 			}
 		});
 		panel_6.add(btnNewFile);
@@ -229,6 +234,7 @@ public class NotePad {
 		JButton btnNewButton_3 = new JButton("Delete");
 		btnNewButton_3.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				if(fileName != null && !fileName.isEmpty()) {
 				int reply = JOptionPane.showConfirmDialog(frame, "Delete Following File: " + fileName,
 						"Delete", JOptionPane.YES_NO_OPTION);
 				if (reply == JOptionPane.YES_OPTION) {
@@ -237,8 +243,10 @@ public class NotePad {
 						JOptionPane.showMessageDialog(frame, "Deleted");
 						setTreeWD("display");
 					}else
-						JOptionPane.showMessageDialog(frame, "Error fiel not Deleted:");
+						JOptionPane.showMessageDialog(frame, "Error file not Deleted:");
 				}
+			}else
+				JOptionPane.showMessageDialog(frame, "No File to Delete!");
 			}
 		});
 		panel_6.add(btnNewButton_3); 
@@ -259,8 +267,7 @@ public class NotePad {
 			String[] values = {"Aluminium", "Smart", "Noire", "Acryl", "Aero", "Fast", "HiFi", "Texture", "McWin", "Mint", "Smart", "Luna", "Texture"};
 		 
 			Object selected = JOptionPane.showInputDialog(frame, "Choose Your  Theme", "Selection", JOptionPane.DEFAULT_OPTION, null, values, "0");
-			if ( selected != null ){
-				System.out.println(selected.toString());
+			if ( selected != null ){ 
 				setOrGetPref("Theme", selected.toString().toLowerCase() + "."  + selected.toString() , "set");
 				frame.setVisible(false);
 					try {
@@ -270,8 +277,7 @@ public class NotePad {
 						e1.printStackTrace();
 					}				
 				frame.setVisible(true);
-			}else{
-			    System.out.println("User cancelled");
+			}else{ 
 			} 
 		});
 		mnNewMenu.add(mntmNewMenuItem);
@@ -304,6 +310,7 @@ public class NotePad {
 		System.out.println(dataNode.getLocation());
 		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(dataNode.getLocation()))){  
 			bw.write(dataNode.getJta().getText());  
+			JOptionPane.showMessageDialog(frame, dataNode.getLocation().replaceFirst(".*/([^/?]+).*", "$1") + " Saved.");
 		} catch (Exception e) { 
 			System.err.println("Error: " + e.getMessage());
 		}
@@ -322,8 +329,7 @@ public class NotePad {
 			}else
 				return (prefs.get(id, ""));
 		} else
-			prefs.put(id, value);
-		System.out.println(value);
+			prefs.put(id, value); 
 		return "";
 	}
 	
@@ -335,8 +341,7 @@ public class NotePad {
 	protected void addTab(JTabbedPane tabbedPane, String location) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
-			public void run() {
-				System.out.println(location);
+			public void run() { 
 				String line;
 				DataNode dn = new DataNode(filePath);
 				tabbedPane.addTab(fileName, null, dn.getJs());
@@ -353,41 +358,27 @@ public class NotePad {
 			}
 		});
 	}
-	
-	/**Adds a new tab to the JTabPane, with a close button.
-	 * @param tabbedPane
-	 * @throws InterruptedException 
-	 * @throws InvocationTargetException 
-	 */
-	protected void addTab(JTabbedPane tabbedPane)  {
-		EventQueue.invokeLater(new Runnable() {
-			@Override
-			public void run() { 
-				DataNode dn = new DataNode(activeTab);
-				tabbedPane.addTab(fileName, null, dn.getJs());				
-				tabbedPane.setTabComponentAt(tabbedPane.getTabCount()-1, new ButtonTabComponent(tabbedPane));
-				tabbedPane.setSelectedIndex(tabbedPane.getTabCount()-1);
-				dn.getJs().setViewportView(dn.getJta());    
-				mapper.put(fileName, dn);  
-			}
-		}); 
-	}
-	
+		
 	/**Sets the tree view directory for user. 
 	 */
 	protected void setTreeWD(String type) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				if(type.contentEquals("chooseFile")) {
+				if(type.contentEquals("chooseFile")) { 
 					JFileChooser f = new JFileChooser();
 					f.setDialogTitle("Specify Your Working Directory");
 					f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-					f.showSaveDialog(null);
-					setOrGetPref("Root", f.getSelectedFile().toString(), "set");  
-					tree = new JTree(addNodes(new File(f.getSelectedFile().toString())));
+					f.showSaveDialog(null); 
+					if( f.getSelectedFile() != null ) { 
+						setOrGetPref("Root", f.getSelectedFile().toString(), "set");  
+						tree = new JTree(addNodes(new File(f.getSelectedFile().toString()))); 
+					} else { 
+						return;
+					} 
 				}else
-					tree = new JTree(addNodes(new File(setOrGetPref("Root", null, "get"))));				
+					tree = new JTree(addNodes(new File(setOrGetPref("Root", null, "get"))));	
+				
 				tree.setRootVisible(true);
 				tree.setShowsRootHandles(true);
 				tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
