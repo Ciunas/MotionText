@@ -70,15 +70,9 @@ public class NotePad {
 				try { 
 					prefs = Preferences.userRoot().node(this.getClass().getName()); 
 					UIManager.setLookAndFeel("com.jtattoo.plaf." + prefs.get("Theme", "noire.Noire") + "LookAndFeel"); 
-
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				} catch (InstantiationException e) {
-					e.printStackTrace();
-				} catch (IllegalAccessException e) {
-					e.printStackTrace();
-				} catch (UnsupportedLookAndFeelException e) {
-					e.printStackTrace();
+				} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+						| UnsupportedLookAndFeelException e1) { 
+					e1.printStackTrace();
 				}
 				try {
 					NotePad window = new NotePad();
@@ -177,8 +171,13 @@ public class NotePad {
 		 
 		JButton btnNewButton_1 = new JButton("Open Tab");
 		btnNewButton_1.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {			  
-				 addTab(tabbedPane, filePath); 			}
+			public void actionPerformed(ActionEvent arg0) {
+				if(filePath != null) {
+					addTab(tabbedPane, filePath);
+				}else {
+					JOptionPane.showMessageDialog(frame, "No File Highlighted!");
+				}				
+			}
 		});
 		
 		JButton btnNewButton_2 = new JButton("New Tab");
@@ -187,7 +186,6 @@ public class NotePad {
 				JFileChooser fileChooser = new JFileChooser();
 				fileChooser.setDialogTitle("Specify save location.");
 				int userSelection = fileChooser.showSaveDialog(frame);
-
 				if (userSelection == JFileChooser.APPROVE_OPTION) {
 					File fileToSave = fileChooser.getSelectedFile();
 					try {
@@ -233,10 +231,18 @@ public class NotePad {
 		mntmNewMenuItem.addActionListener((ActionEvent event) -> {
 			String[] values = {"Aluminium", "Smart", "Noire", "Acryl", "Aero", "Fast", "HiFi", "Texture", "McWin", "Mint", "Smart", "Luna", "Texture"};
 		 
-			Object selected = JOptionPane.showInputDialog(null, "Choose Your  Theme", "Selection", JOptionPane.DEFAULT_OPTION, null, values, "0");
+			Object selected = JOptionPane.showInputDialog(frame, "Choose Your  Theme", "Selection", JOptionPane.DEFAULT_OPTION, null, values, "0");
 			if ( selected != null ){
 				System.out.println(selected.toString());
 				setOrGetPref("Theme", selected.toString().toLowerCase() + "."  + selected.toString() , "set");
+				frame.setVisible(false);
+					try {
+						UIManager.setLookAndFeel("com.jtattoo.plaf." + prefs.get("Theme", "noire.Noire") + "LookAndFeel");
+					} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+							| UnsupportedLookAndFeelException e1) { 
+						e1.printStackTrace();
+					}				
+				frame.setVisible(true);
 			}else{
 			    System.out.println("User cancelled");
 			} 
@@ -283,12 +289,11 @@ public class NotePad {
 	 * @return
 	 */
 	protected String setOrGetPref(String id, String value, String SetGet) { 
-		//prefs = Preferences.userRoot().node(this.getClass().getName());
 		if (SetGet.equals("get")) {
 			if(id.contains("Root")) {
-				return (prefs.get(id, "/home/ciunas/Documents/Work"));
+				return (prefs.get(id, "."));
 			}else
-				return (prefs.get(id, "/home/ciunas/Documents/Work"));
+				return (prefs.get(id, ""));
 		} else
 			prefs.put(id, value);
 		System.out.println(value);
@@ -349,9 +354,10 @@ public class NotePad {
 			public void run() {
 				if(type.contentEquals("chooseFile")) {
 					JFileChooser f = new JFileChooser();
+					f.setDialogTitle("Specify Your Working Directory");
 					f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 					f.showSaveDialog(null);
-					setOrGetPref("Root", f.getSelectedFile().toString(), "set");   //save root dir to preferences
+					setOrGetPref("Root", f.getSelectedFile().toString(), "set");  
 					tree = new JTree(addNodes(new File(f.getSelectedFile().toString())));
 				}else
 					tree = new JTree(addNodes(new File(setOrGetPref("Root", null, "get"))));				
