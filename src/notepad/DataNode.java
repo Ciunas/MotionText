@@ -15,7 +15,7 @@ public class DataNode {
 		this.location = location; 
 		jta.setForeground(Color.GREEN);
 		jta.setBackground(Color.BLACK);
-		jta.setFont(new Font("SansSerif", Font.PLAIN, 15));
+		jta.setFont(new Font("SansSerif", Font.PLAIN, 14));
 		js.setViewportView(jta);
 	}
 	

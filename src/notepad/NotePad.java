@@ -17,6 +17,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.text.Position;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer; 
 import javax.swing.tree.TreeSelectionModel;
@@ -35,6 +36,8 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.JLabel;
 import java.awt.Dimension;
 import javax.swing.JTree;
+import javax.swing.SwingUtilities;
+
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.ActionEvent;
@@ -96,7 +99,7 @@ public class NotePad {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		
+
 		frame = new JFrame();
 		frame.setMinimumSize(new Dimension(400, 400));
 		frame.setBounds(100, 100, 1054, 771);
@@ -178,7 +181,7 @@ public class NotePad {
 		btnNewButton_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if(filePath != null) {
-					addTab(tabbedPane, filePath);
+					addTab(tabbedPane);
 				}else {
 					JOptionPane.showMessageDialog(frame, "No File Highlighted!");
 				}				
@@ -188,13 +191,13 @@ public class NotePad {
 		JButton btnNewButton_2 = new JButton("New Tab");
 		btnNewButton_2.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-
+				File fileToSave = null;
 				int reply = JOptionPane.showConfirmDialog(frame, "Save to working directory:", "Save",
 						JOptionPane.YES_NO_OPTION);
 				if (reply == JOptionPane.YES_OPTION) {
 					String name = JOptionPane.showInputDialog(frame, "File Name:");
 					if (name != null && !name.isEmpty()) {
-						File fileToSave = new File(setOrGetPref("Root", null, "get") + "/" + name);
+						fileToSave = new File(setOrGetPref("Root", null, "get") + "/" + name);
 						try {
 							fileToSave.createNewFile();
 						} catch (IOException e) {
@@ -206,15 +209,18 @@ public class NotePad {
 					fileChooser.setDialogTitle("Specify save location.");
 					int userSelection = fileChooser.showSaveDialog(frame);
 					if (userSelection == JFileChooser.APPROVE_OPTION) {
-						File fileToSave = fileChooser.getSelectedFile();
+						 fileToSave = fileChooser.getSelectedFile();
 						try {
-							fileToSave.createNewFile();
+							fileToSave.createNewFile(); 
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
 					}
-				}
-				setTreeWD("display");
+				} 
+				filePath = fileToSave.toString(); 
+				fileName = filePath.replaceFirst(".*/([^/?]+).*", "$1"); 
+				addTab(tabbedPane);
+				setTreeWD("display");  
 			}
 		});
 		panel_6.add(btnNewButton_2);
@@ -234,19 +240,24 @@ public class NotePad {
 		JButton btnNewButton_3 = new JButton("Delete");
 		btnNewButton_3.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				if(fileName != null && !fileName.isEmpty()) {
-				int reply = JOptionPane.showConfirmDialog(frame, "Delete Following File: " + fileName,
-						"Delete", JOptionPane.YES_NO_OPTION);
-				if (reply == JOptionPane.YES_OPTION) {
-					File file = new File(filePath);
-					if (file.delete()) {
-						JOptionPane.showMessageDialog(frame, "Deleted");
-						setTreeWD("display");
-					}else
-						JOptionPane.showMessageDialog(frame, "Error file not Deleted:");
-				}
-			}else
-				JOptionPane.showMessageDialog(frame, "No File to Delete!");
+				File file = new File(filePath);
+				if (!file.isDirectory()) {
+					if (fileName != null && !fileName.isEmpty()) {
+
+						int reply = JOptionPane.showConfirmDialog(frame, "Delete Following File: " + fileName, "Delete",
+								JOptionPane.YES_NO_OPTION);
+						if (reply == JOptionPane.YES_OPTION) { 
+							if (file.delete()) {
+								setTreeWD("display");
+							} else
+								JOptionPane.showMessageDialog(frame, "Error file not Deleted:");
+
+						}
+					} else
+						JOptionPane.showMessageDialog(frame, "No File to Delete!");
+					filePath = setOrGetPref("Root", null, "get");
+				}else
+					JOptionPane.showMessageDialog(frame, "Cant Delete Directory!");
 			}
 		});
 		panel_6.add(btnNewButton_3); 
@@ -264,24 +275,23 @@ public class NotePad {
 		mntmNewMenuItem.setMnemonic(KeyEvent.VK_E);
 		mntmNewMenuItem.setToolTipText("Set theme of Text Editor");
 		mntmNewMenuItem.addActionListener((ActionEvent event) -> {
-			String[] values = {"Aluminium", "Smart", "Noire", "Acryl", "Aero", "Fast", "HiFi", "Texture", "McWin", "Mint", "Smart", "Luna", "Texture"};
+			String[] values = {"Aluminium", "Smart", "Noire", "Acryl", "Aero", "Fast", "HiFi", "Texture", "McWin", "Mint", "Bernstein", "Luna", "Texture"};
 		 
 			Object selected = JOptionPane.showInputDialog(frame, "Choose Your  Theme", "Selection", JOptionPane.DEFAULT_OPTION, null, values, "0");
-			if ( selected != null ){ 
-				setOrGetPref("Theme", selected.toString().toLowerCase() + "."  + selected.toString() , "set");
-				frame.setVisible(false);
+			if (selected != null){ 
+				setOrGetPref("Theme", selected.toString().toLowerCase() + "."  + selected.toString() , "set"); 
 					try {
 						UIManager.setLookAndFeel("com.jtattoo.plaf." + prefs.get("Theme", "noire.Noire") + "LookAndFeel");
 					} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
 							| UnsupportedLookAndFeelException e1) { 
 						e1.printStackTrace();
-					}				
+					}
+				frame.setVisible(false);
+				SwingUtilities.updateComponentTreeUI(frame);
 				frame.setVisible(true);
-			}else{ 
 			} 
 		});
 		mnNewMenu.add(mntmNewMenuItem);
-		
 		setTreeWD("display");
 	}
 	
@@ -290,7 +300,7 @@ public class NotePad {
 	 * @param dir
 	 * @return DefaultMutableTreeNode
 	 */
-	public static DefaultMutableTreeNode addNodes(File dir) {
+	private static DefaultMutableTreeNode addNodes(File dir) {
 		DefaultMutableTreeNode node = new DefaultMutableTreeNode(dir);
 		for (File file : dir.listFiles()) {
 			if (file.isDirectory()) {
@@ -306,7 +316,7 @@ public class NotePad {
 	 * @param filePath
 	 * @param jta
 	 */
-	public void saveFile(DataNode dataNode) { 
+	private void saveFile(DataNode dataNode) { 
 		System.out.println(dataNode.getLocation());
 		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(dataNode.getLocation()))){  
 			bw.write(dataNode.getJta().getText());  
@@ -322,7 +332,7 @@ public class NotePad {
 	 * @param SetGet
 	 * @return
 	 */
-	protected String setOrGetPref(String id, String value, String SetGet) { 
+	private String setOrGetPref(String id, String value, String SetGet) { 
 		if (SetGet.equals("get")) {
 			if(id.contains("Root")) {
 				return (prefs.get(id, "."));
@@ -338,16 +348,17 @@ public class NotePad {
 	 * @throws InterruptedException 
 	 * @throws InvocationTargetException 
 	 */
-	protected void addTab(JTabbedPane tabbedPane, String location) {
+	private void addTab(JTabbedPane tabbedPane) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() { 
 				String line;
 				DataNode dn = new DataNode(filePath);
+				System.out.println(fileName);
 				tabbedPane.addTab(fileName, null, dn.getJs());
 				tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, new ButtonTabComponent(tabbedPane));
 				tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1); 	
-				try (BufferedReader br = new BufferedReader(new FileReader(location))) {
+				try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
 					while ((line = br.readLine()) != null) {
 						dn.getJta().append(line + "\n");
 					}
@@ -361,7 +372,7 @@ public class NotePad {
 		
 	/**Sets the tree view directory for user. 
 	 */
-	protected void setTreeWD(String type) {
+	private void setTreeWD(String type) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
@@ -389,10 +400,10 @@ public class NotePad {
 					public void valueChanged(TreeSelectionEvent e) {
 						DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
 						Object userObject = selectedNode.getUserObject();
-						filePath = userObject.toString();
+						filePath = userObject.toString(); 
 						fileName = filePath.replaceFirst(".*/([^/?]+).*", "$1");
 					}
-				});
+				}); 
 			}
 		});
 	}
