@@ -11,14 +11,34 @@ public class DataNode {
 	JTextArea jta = new JTextArea(); 
 	String location;
 	
-	public DataNode(String location){
-		this.location = location; 
-		jta.setForeground(Color.GREEN);
-		jta.setBackground(Color.BLACK);
-		jta.setFont(new Font("SansSerif", Font.PLAIN, 14));
+	public DataNode(String location, String fontSize, String fourgColour, String backColour){
+		this.location = location;  
+		jta.setForeground(setColour(fourgColour));
+		jta.setBackground(setColour(backColour));
+		jta.setFont(new Font("SansSerif", Font.PLAIN, Integer.parseInt(fontSize))); 
 		js.setViewportView(jta);
 	}
 	
+	public void changeFont(String fontSize, String fourgColour, String backColour){ 
+		jta.setForeground(setColour(fourgColour));
+		jta.setBackground(setColour(backColour));
+		jta.setFont(new Font("SansSerif", Font.PLAIN, Integer.parseInt(fontSize))); 
+		js.setViewportView(jta);
+	}
+	
+	private Color setColour(String colStr) {
+		Color[] col = { Color.BLACK, Color.BLUE, Color.GRAY, Color.GREEN, Color.ORANGE, Color.RED, Color.WHITE,
+				Color.YELLOW, Color.PINK };
+		String[] colours = { "Black", "Blue", "Gray", "Green", "Orange", "Red", "White", "Yellow", "Pink" };
+		int i;
+		for (i = 0; i < colours.length; i++) {
+			if (colStr.equals(colours[i])) {
+				break;
+			}
+		}
+		return col[i];
+	}
+
 	public String getLocation() {
 		return location;
 	}
