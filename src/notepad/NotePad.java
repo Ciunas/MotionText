@@ -37,8 +37,11 @@ import javax.swing.JLabel;
 import java.awt.Dimension;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.ActionEvent;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -58,9 +61,10 @@ public class NotePad {
 	private String filePath;
 	private String fileName;
 	private String activeTab;
-	JScrollPane scrollPane_1;
-	JFrame frame;
-	JTree tree;
+	private JScrollPane scrollPane_1;
+	private JLabel lblNewLabel_2;
+	private JFrame frame;
+	private JTree tree; 
 
 	/**
 	 * Launch the application.
@@ -116,6 +120,9 @@ public class NotePad {
 		JLabel lblNewLabel_1 = new JLabel("Made By: Ciunas Bennett.");
 		lblNewLabel_1.setFont(new Font("Dialog", Font.ITALIC, 12));
 		panel_1.add(lblNewLabel_1, BorderLayout.EAST);
+		
+		lblNewLabel_2 = new JLabel("");
+		panel_1.add(lblNewLabel_2, BorderLayout.CENTER);
 
 		JPanel panel_2 = new JPanel();
 		panel.add(panel_2, BorderLayout.CENTER);
@@ -129,8 +136,11 @@ public class NotePad {
 				int index = sourceTabbedPane.getSelectedIndex();
 				if (index == -1) {
 					activeTab = "";
-				} else
+				} else {
+					
 					activeTab = sourceTabbedPane.getTitleAt(index);
+					//frame.setFocusable(true);
+				}
 			}
 		};
 		tabbedPane.addChangeListener(changeListener);
@@ -343,8 +353,15 @@ public class NotePad {
 			}
 		});
 		mnNewMenu.add(mntmNewMenuItem);
+		
 		setTreeWD("display");
+		
+		KeyListener listener = new MyKeyListener();
+		frame.addKeyListener(listener);
+		frame.setFocusable(true);
+
 	}
+	
 
 	/**
 	 * Builds a JTree
@@ -432,6 +449,25 @@ public class NotePad {
 			}
 		});
 	}
+	
+	
+	private void displayInfo(String info) {
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				Integer waitSeconds = 5;
+				lblNewLabel_2.setText(info);
+				Timer timer = new Timer(waitSeconds * 1000, new ActionListener() {
+
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						lblNewLabel_2.setText("");
+					}
+				});
+				timer.start();
+			}
+		});
+	}
 
 	/**
 	 * Sets the tree view directory for user.
@@ -471,6 +507,58 @@ public class NotePad {
 				});
 			}
 		});
+	}
+	
+	/**
+	 * helper class KeyListener
+	 */
+	public class MyKeyListener implements KeyListener {
+
+		boolean ctl = false;
+		boolean s = false;
+
+		@Override
+		public void keyTyped(KeyEvent e) { 
+		}
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+			switch (e.getKeyCode()) {
+			case KeyEvent.VK_CONTROL:
+				ctl = true;
+				break;
+			case KeyEvent.VK_S:
+				s = true;
+				break;
+			}
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+			System.out.println("keyReleased=" + KeyEvent.getKeyText(e.getKeyCode()));
+
+			System.out.println(s);
+			System.out.println(ctl);
+			if (ctl == true && s == true) {
+				System.out.println("Both Keys pressed");
+				if (activeTab != null && !activeTab.isEmpty()) { 
+					saveFile(mapper.get(activeTab));
+					
+				} else
+					JOptionPane.showMessageDialog(frame, "No File to Save!");
+				
+			}
+
+			switch (e.getKeyCode()) {
+			case KeyEvent.VK_CONTROL:
+				ctl = false;
+				break;
+			case KeyEvent.VK_S:
+				s = false;
+				break;
+			}
+			displayInfo("File Saved:");
+		}
 	}
 
 	/**
