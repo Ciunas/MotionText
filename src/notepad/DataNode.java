@@ -16,14 +16,16 @@ public class DataNode {
 		jta.setForeground(setColour(fourgColour));
 		jta.setBackground(setColour(backColour));
 		jta.setFont(new Font("SansSerif", Font.PLAIN, Integer.parseInt(fontSize))); 
-		js.setViewportView(jta);
+		js.setViewportView(jta); 
+		jta.setFocusable(true);
 	}
 	
 	public void changeFont(String fontSize, String fourgColour, String backColour){ 
 		jta.setForeground(setColour(fourgColour));
 		jta.setBackground(setColour(backColour));
 		jta.setFont(new Font("SansSerif", Font.PLAIN, Integer.parseInt(fontSize))); 
-		js.setViewportView(jta);
+		js.setViewportView(jta); 
+		jta.setFocusable(true);
 	}
 	
 	private Color setColour(String colStr) {

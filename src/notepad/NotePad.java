@@ -37,9 +37,10 @@ import javax.swing.JLabel;
 import java.awt.Dimension;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-
+import javax.swing.Timer; 
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.ActionEvent;
@@ -48,6 +49,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JMenu;
 import java.awt.Font;
+import javax.swing.SwingConstants;
 
 /**
  * @author ciunas
@@ -64,7 +66,9 @@ public class NotePad {
 	private JScrollPane scrollPane_1;
 	private JLabel lblNewLabel_2;
 	private JFrame frame;
-	private JTree tree; 
+	private JTree tree;
+	private MyFocusListener myFocusListener;
+	private MyKeyListener listener; 
 
 	/**
 	 * Launch the application.
@@ -115,35 +119,51 @@ public class NotePad {
 
 		JPanel panel_1 = new JPanel();
 		panel.add(panel_1, BorderLayout.SOUTH);
-		panel_1.setLayout(new BorderLayout(0, 0));
-
-		JLabel lblNewLabel_1 = new JLabel("Made By: Ciunas Bennett.");
-		lblNewLabel_1.setFont(new Font("Dialog", Font.ITALIC, 12));
-		panel_1.add(lblNewLabel_1, BorderLayout.EAST);
+		panel_1.setLayout(new MigLayout("", "[grow][grow][grow][grow][]", "[15px]"));
 		
 		lblNewLabel_2 = new JLabel("");
-		panel_1.add(lblNewLabel_2, BorderLayout.CENTER);
+		lblNewLabel_2.setHorizontalAlignment(SwingConstants.CENTER);
+		lblNewLabel_2.setFont(new Font("Dialog", Font.BOLD | Font.ITALIC, 13));
+		panel_1.add(lblNewLabel_2, "cell 2 0,grow");
+
+		JLabel lblNewLabel_1 = new JLabel("Made By: Ciunas Bennett");
+		lblNewLabel_1.setHorizontalAlignment(SwingConstants.RIGHT);
+		lblNewLabel_1.setFont(new Font("Dialog", Font.ITALIC, 12));
+		panel_1.add(lblNewLabel_1, "cell 4 0,alignx left,aligny top");
 
 		JPanel panel_2 = new JPanel();
 		panel.add(panel_2, BorderLayout.CENTER);
 		panel_2.setLayout(new BorderLayout(0, 0));
 
+		myFocusListener = new MyFocusListener();
+		
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		panel_2.add(tabbedPane, BorderLayout.CENTER);
 		ChangeListener changeListener = new ChangeListener() {
-			public void stateChanged(ChangeEvent changeEvent) {
+			public void stateChanged(ChangeEvent changeEvent) { 
 				JTabbedPane sourceTabbedPane = (JTabbedPane) changeEvent.getSource();
 				int index = sourceTabbedPane.getSelectedIndex();
 				if (index == -1) {
 					activeTab = "";
 				} else {
-					
-					activeTab = sourceTabbedPane.getTitleAt(index);
-					//frame.setFocusable(true);
+					String temp = activeTab;
+					activeTab = sourceTabbedPane.getTitleAt(index);    
+					for (String key : mapper.keySet()) {
+						if(key.contentEquals(temp)) {
+							DataNode dn = mapper.get(key);
+							dn.getJta().removeKeyListener(listener); 
+							dn.jta.removeFocusListener(myFocusListener);
+						}else if(key.contentEquals(activeTab)) {
+							DataNode dn = mapper.get(key);
+							dn.getJta().addKeyListener(listener); 
+							dn.jta.addFocusListener(myFocusListener);
+						}
+					} 					
 				}
 			}
 		};
 		tabbedPane.addChangeListener(changeListener);
+		
 
 		JPanel panel_3 = new JPanel();
 		panel_3.setPreferredSize(new Dimension(250, 10));
@@ -176,6 +196,7 @@ public class NotePad {
 		panel_4.add(scrollPane_1, "cell 0 1 1 2,grow");
 
 		scrollPane_1.setViewportView(tree);
+		scrollPane_1.setFocusable(false);
 
 		JPanel panel_7 = new JPanel();
 		panel_7.setLayout(new MigLayout("", "[grow][grow][grow]", "[]"));
@@ -254,33 +275,7 @@ public class NotePad {
 		btnNewButton_3.setToolTipText("Delete file from working directory");
 		btnNewButton_3.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				File file = new File(filePath);
-				if (!file.isDirectory()) {
-					if (fileName != null && !fileName.isEmpty()) {
-
-						int reply = JOptionPane.showConfirmDialog(frame, "Delete Following File: " + fileName, "Delete",
-								JOptionPane.YES_NO_OPTION);
-						if (reply == JOptionPane.YES_OPTION) {
-							if (file.delete()) {
-								for (String key : mapper.keySet()) {
-									if (fileName.contentEquals(key)) {
-										for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-											if (tabbedPane.getTitleAt(i).equals(fileName))
-												tabbedPane.remove(i);
-											mapper.remove(key);
-										}
-									}
-								}
-								setTreeWD("display");
-							} else
-								JOptionPane.showMessageDialog(frame, "Error file not Deleted:");
-
-						}
-					} else
-						JOptionPane.showMessageDialog(frame, "No File to Delete!");
-					filePath = setOrGetPref("Root", null, "get");
-				} else
-					JOptionPane.showMessageDialog(frame, "Cant Delete Directory!");
+				deleteFile(tabbedPane);
 			}
 		});
 		panel_6.add(btnNewButton_3);
@@ -356,12 +351,49 @@ public class NotePad {
 		
 		setTreeWD("display");
 		
-		KeyListener listener = new MyKeyListener();
-		frame.addKeyListener(listener);
-		frame.setFocusable(true);
-
+		listener = new MyKeyListener();
+		frame.setFocusable(false);   
 	}
 	
+	/**
+	 * delete file form memory
+	 * @param tabbedPane
+	 */
+	protected void deleteFile(JTabbedPane tabbedPane) {
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				File file = new File(filePath);
+				if (!file.isDirectory()) {
+					if (fileName != null && !fileName.isEmpty()) {
+						int reply = JOptionPane.showConfirmDialog(frame, "Delete Following File: " + fileName, "Delete",
+								JOptionPane.YES_NO_OPTION);
+						if (reply == JOptionPane.YES_OPTION) {
+							if (file.delete()) {
+								String temp = null;
+								for (String key : mapper.keySet()) {
+									if (fileName.contentEquals(key)) {
+										for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+											if (tabbedPane.getTitleAt(i).equals(fileName))
+												tabbedPane.remove(i);
+											temp = key; 											
+										}
+									}
+								}
+								if(temp != null && !temp.isEmpty())
+									mapper.remove(temp);
+								setTreeWD("display");
+							} else
+								JOptionPane.showMessageDialog(frame, "Error file not Deleted:");
+						}
+					} else
+						JOptionPane.showMessageDialog(frame, "No File to Delete!");
+					filePath = setOrGetPref("Root", null, "get");
+				} else
+					JOptionPane.showMessageDialog(frame, "Cant Delete Directory!");
+			}
+		});
+	}
 
 	/**
 	 * Builds a JTree
@@ -386,12 +418,10 @@ public class NotePad {
 	 * @param filePath
 	 * @param jta
 	 */
-	private void saveFile(DataNode dataNode) {
-		System.out.println(dataNode.getLocation());
+	private void saveFile(DataNode dataNode) {  
 		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(dataNode.getLocation()))) {
-			bw.write(dataNode.getJta().getText());
-			JOptionPane.showMessageDialog(frame,
-					dataNode.getLocation().replaceFirst(".*/([^/?]+).*", "$1") + " Saved.");
+			bw.write(dataNode.getJta().getText()); 
+			displayInfo("File Saved: " + dataNode.getLocation().replaceFirst(".*/([^/?]+).*", "$1"));
 		} catch (Exception e) {
 			System.err.println("Error: " + e.getMessage());
 		}
@@ -445,12 +475,17 @@ public class NotePad {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+				dn.getJta().addKeyListener(listener);  
+				dn.getJta().addFocusListener(myFocusListener);
 				mapper.put(fileName, dn);
 			}
 		});
 	}
 	
 	
+	/**Displays info about file saved
+	 * @param info
+	 */
 	private void displayInfo(String info) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
@@ -458,7 +493,6 @@ public class NotePad {
 				Integer waitSeconds = 5;
 				lblNewLabel_2.setText(info);
 				Timer timer = new Timer(waitSeconds * 1000, new ActionListener() {
-
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						lblNewLabel_2.setText("");
@@ -535,18 +569,12 @@ public class NotePad {
 
 		@Override
 		public void keyReleased(KeyEvent e) {
-			System.out.println("keyReleased=" + KeyEvent.getKeyText(e.getKeyCode()));
-
-			System.out.println(s);
-			System.out.println(ctl);
 			if (ctl == true && s == true) {
-				System.out.println("Both Keys pressed");
-				if (activeTab != null && !activeTab.isEmpty()) { 
+				if (activeTab != null && !activeTab.isEmpty()) {
 					saveFile(mapper.get(activeTab));
-					
+
 				} else
 					JOptionPane.showMessageDialog(frame, "No File to Save!");
-				
 			}
 
 			switch (e.getKeyCode()) {
@@ -556,8 +584,11 @@ public class NotePad {
 			case KeyEvent.VK_S:
 				s = false;
 				break;
+			 default:
+				s = false;
+				ctl = false;
+				break;
 			}
-			displayInfo("File Saved:");
 		}
 	}
 
@@ -577,6 +608,22 @@ public class NotePad {
 				}
 			}
 			return super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+		}
+	}	
+	
+	/**
+	 * helper class Focus Listener
+	 */
+	class MyFocusListener implements FocusListener {
+
+		@Override
+		public void focusGained(FocusEvent e) {
+			System.out.println("Focus Gained");
+		}
+
+		@Override
+		public void focusLost(FocusEvent e) {
+
 		}
 	}
 }
