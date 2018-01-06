@@ -15,15 +15,15 @@ public class DataNode {
 		this.location = location;  
 		jta.setForeground(setColour(fourgColour));
 		jta.setBackground(setColour(backColour));
-		jta.setFont(new Font("SansSerif", Font.PLAIN, Integer.parseInt(fontSize))); 
+		jta.setFont(new Font("Dialog", Font.PLAIN, Integer.parseInt(fontSize))); 
 		js.setViewportView(jta); 
-		jta.setFocusable(true);
+		jta.setFocusable(true); 
 	}
 	
 	public void changeFont(String fontSize, String fourgColour, String backColour){ 
 		jta.setForeground(setColour(fourgColour));
 		jta.setBackground(setColour(backColour));
-		jta.setFont(new Font("SansSerif", Font.PLAIN, Integer.parseInt(fontSize))); 
+		jta.setFont(new Font("Dialog", Font.PLAIN, Integer.parseInt(fontSize))); 
 		js.setViewportView(jta); 
 		jta.setFocusable(true);
 	}

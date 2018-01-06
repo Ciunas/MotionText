@@ -19,7 +19,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeCellRenderer; 
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.GridLayout;
 import java.io.BufferedReader;
@@ -43,13 +43,17 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.ActionEvent;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JMenu;
 import java.awt.Font;
-import javax.swing.SwingConstants;
+import javax.swing.SwingConstants; 
+import javax.swing.border.TitledBorder;
 
 /**
  * @author ciunas
@@ -68,7 +72,8 @@ public class NotePad {
 	private JFrame frame;
 	private JTree tree;
 	private MyFocusListener myFocusListener;
-	private MyKeyListener listener; 
+	private MyKeyListener listener;
+	private JTabbedPane tabbedPane; 
 
 	/**
 	 * Launch the application.
@@ -123,7 +128,7 @@ public class NotePad {
 		
 		lblNewLabel_2 = new JLabel("");
 		lblNewLabel_2.setHorizontalAlignment(SwingConstants.CENTER);
-		lblNewLabel_2.setFont(new Font("Dialog", Font.BOLD | Font.ITALIC, 13));
+		lblNewLabel_2.setFont(new Font("Dialog", Font.BOLD, 12));
 		panel_1.add(lblNewLabel_2, "cell 2 0,grow");
 
 		JLabel lblNewLabel_1 = new JLabel("Made By: Ciunas Bennett");
@@ -137,34 +142,15 @@ public class NotePad {
 
 		myFocusListener = new MyFocusListener();
 		
-		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		panel_2.add(tabbedPane, BorderLayout.CENTER);
 		ChangeListener changeListener = new ChangeListener() {
 			public void stateChanged(ChangeEvent changeEvent) { 
-				JTabbedPane sourceTabbedPane = (JTabbedPane) changeEvent.getSource();
-				int index = sourceTabbedPane.getSelectedIndex();
-				if (index == -1) {
-					activeTab = "";
-				} else {
-					String temp = activeTab;
-					activeTab = sourceTabbedPane.getTitleAt(index);    
-					for (String key : mapper.keySet()) {
-						if(key.contentEquals(temp)) {
-							DataNode dn = mapper.get(key);
-							dn.getJta().removeKeyListener(listener); 
-							dn.jta.removeFocusListener(myFocusListener);
-						}else if(key.contentEquals(activeTab)) {
-							DataNode dn = mapper.get(key);
-							dn.getJta().addKeyListener(listener); 
-							dn.jta.addFocusListener(myFocusListener);
-						}
-					} 					
-				}
+				changeEventTab(changeEvent);
 			}
 		};
 		tabbedPane.addChangeListener(changeListener);
 		
-
 		JPanel panel_3 = new JPanel();
 		panel_3.setPreferredSize(new Dimension(250, 10));
 		panel_3.setBackground(Color.LIGHT_GRAY);
@@ -174,7 +160,7 @@ public class NotePad {
 
 		JPanel panel_4 = new JPanel();
 		panel_3.add(panel_4, BorderLayout.CENTER);
-		panel_4.setLayout(new MigLayout("", "[grow]", "[][grow][grow][grow]"));
+		panel_4.setLayout(new MigLayout("", "[grow]", "[][grow][grow]"));
 
 		JPanel panel_5 = new JPanel();
 		panel_4.add(panel_5, "cell 0 0,grow");
@@ -203,28 +189,142 @@ public class NotePad {
 
 		JLabel lblNewLabel = new JLabel("Tree");
 		panel_7.add(lblNewLabel, "cell 0 0 2 1");
-
-		JPanel panel_6 = new JPanel();
-		panel_4.add(panel_6, "cell 0 3,grow");
-		panel_6.setLayout(new GridLayout(2, 1, 0, 0));
+		
+		JPanel panel_8 = new JPanel();
+		panel_8.setBorder(new TitledBorder(null, "File stuff", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel_3.add(panel_8, BorderLayout.SOUTH);
+		panel_8.setLayout(new GridLayout(2, 2, 0, 0));
 
 		JButton btnNewButton_1 = new JButton("Open");
+		panel_8.add(btnNewButton_1);
 		btnNewButton_1.setToolTipText("Open highlighted file");
 		btnNewButton_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (filePath != null && filePath != setOrGetPref("Root", null, "get")) {
 					addTab(tabbedPane);
-				} else {
-					JOptionPane.showMessageDialog(frame, "No File Highlighted!");
+				} else { 
+					EventQueue.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							JOptionPane.showMessageDialog(frame, "No File Highlighted!", "Hay", JOptionPane.ERROR_MESSAGE);  
+						}
+					});
 				}
 			}
 		});
 
 		JButton btnNewButton_2 = new JButton("New");
+		panel_8.add(btnNewButton_2);
 		btnNewButton_2.setToolTipText("Create a new file");
 		btnNewButton_2.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				newFile();
+			}
+		});
+
+		JButton btnNewFile = new JButton("Save");
+		panel_8.add(btnNewFile);
+		btnNewFile.setToolTipText("Save foreground tab");
+		btnNewFile.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (activeTab != null && !activeTab.isEmpty()) {
+					saveFile(mapper.get(activeTab));
+				} else {
+					EventQueue.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							JOptionPane.showMessageDialog(frame, "No File to Save!", "Hay", JOptionPane.ERROR_MESSAGE);  
+						}
+					});
+				} 
+			}
+		});
+
+		JButton btnNewButton_3 = new JButton("Delete");
+		panel_8.add(btnNewButton_3);
+		btnNewButton_3.setToolTipText("Delete file from working directory");
+		btnNewButton_3.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				deleteFile(tabbedPane);
+			}
+		}); 
+		
+		JMenuBar menuBar = new JMenuBar();
+		frame.setJMenuBar(menuBar);
+
+		JMenu mnNewMenu = new JMenu("Options");
+		menuBar.add(mnNewMenu);
+
+		JMenuItem mntmFile = new JMenuItem("Set Font");
+		mntmFile.setMnemonic(KeyEvent.VK_E);
+		mntmFile.setToolTipText("Set theme of Text Editor");
+		mntmFile.addActionListener((ActionEvent event) -> { 
+			setFont();
+		});
+		mnNewMenu.add(mntmFile);
+		
+		JMenuItem mntmNewMenuItem = new JMenuItem("Set Theme");
+		mntmNewMenuItem.setMnemonic(KeyEvent.VK_E);
+		mntmNewMenuItem.setToolTipText("Set theme of Text Editor");
+		mntmNewMenuItem.addActionListener((ActionEvent event) -> {
+			setTheme();
+		});
+		mnNewMenu.add(mntmNewMenuItem);
+		
+		JMenuItem mntmNewMenuItem_1 = new JMenuItem("Help");
+		mntmNewMenuItem.setMnemonic(KeyEvent.VK_E);
+		mntmNewMenuItem.setToolTipText("Set theme of Text Editor");
+		mntmNewMenuItem_1.addActionListener((ActionEvent event) -> {
+			EventQueue.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					JOptionPane.showMessageDialog(frame, "No Help For You:", "Alert", JOptionPane.ERROR_MESSAGE);  
+				}
+			});
+
+		});
+		mnNewMenu.add(mntmNewMenuItem_1);
+		
+		setTreeWD("display");		
+		listener = new MyKeyListener();
+		frame.setFocusable(false);   
+	}
+	
+	/**
+	 * Monitors change in active tab
+	 * @param changeEvent
+	 */
+	private void changeEventTab(ChangeEvent changeEvent) {
+		JTabbedPane sourceTabbedPane = (JTabbedPane) changeEvent.getSource();
+		int index = sourceTabbedPane.getSelectedIndex();
+		if (index == -1) {
+			activeTab = "";
+		} else {
+			String temp = activeTab;
+			activeTab = sourceTabbedPane.getTitleAt(index);    
+			for (String key : mapper.keySet()) {
+				if(key.contentEquals(temp)) {
+					DataNode dn = mapper.get(key);
+					dn.getJta().removeKeyListener(listener); 
+					dn.jta.removeFocusListener(myFocusListener);
+				}else if(key.contentEquals(activeTab)) {
+					DataNode dn = mapper.get(key);
+					dn.getJta().addKeyListener(listener); 
+					dn.jta.addFocusListener(myFocusListener);
+				}
+			} 					
+		}		
+	}
+
+	/**
+	 * Create a new file
+	 */
+	private void newFile() {
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() { 
 				File fileToSave = null;
+				boolean write = false;
 				int reply = JOptionPane.showConfirmDialog(frame, "Save to working directory:", "Save",
 						JOptionPane.YES_NO_OPTION);
 				if (reply == JOptionPane.YES_OPTION) {
@@ -236,8 +336,10 @@ public class NotePad {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-					}
-				} else {
+						write = true;
+						System.out.println(write);
+					} 
+				} else if (reply == JOptionPane.NO_OPTION){
 					JFileChooser fileChooser = new JFileChooser();
 					fileChooser.setDialogTitle("Specify save location.");
 					int userSelection = fileChooser.showSaveDialog(frame);
@@ -245,152 +347,141 @@ public class NotePad {
 						fileToSave = fileChooser.getSelectedFile();
 						try {
 							fileToSave.createNewFile();
+							write = true; 
 						} catch (IOException e) {
+							System.out.println("Exception");
 							e.printStackTrace();
 						}
+						
+					}  		 
+				} 
+				
+				if((reply == JOptionPane.NO_OPTION || reply == JOptionPane.YES_OPTION) && write == true) { 
+					filePath = fileToSave.toString();
+					fileName = filePath.replaceFirst(".*/([^/?]+).*", "$1");
+					addTab(tabbedPane);
+					setTreeWD("display");
+				}
+			}
+		});  
+	}
+	
+	
+	/**
+	 * Sets the clour and size fo font
+	 */
+	private void setFont() {
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				JPanel myPanel = new JPanel(); 
+				myPanel.setLayout(new MigLayout("", "[grow][grow]", "[grow][grow][grow][grow]")); 
+				JLabel lblSetHteFont = new JLabel("Font Size:");
+				myPanel.add(lblSetHteFont, "cell 0 1,alignx trailing"); 
+				
+				Integer[] ITEMS = { 9, 10, 11, 12, 14, 16, 18, 20, 24, 32 };  
+				JComboBox <Integer> comboBox = new JComboBox<Integer>(ITEMS);		 
+				myPanel.add(comboBox, "cell 1 1,growx");
+				 
+				JLabel lblSetFourgroun = new JLabel("Fourground Colour:");
+				myPanel.add(lblSetFourgroun, "cell 0 2,alignx trailing");
+				 
+				String[] colours = { "Green", "Blue", "Gray", "BLack", "Orange", "Red", "White", "Yellow", "Pink"};
+				String[] colours1 = { "Black", "Blue", "Gray", "Green", "Orange", "Red", "White", "Yellow", "Pink"};
+				
+				JComboBox <String> comboBox_1 = new JComboBox<String>(colours);
+				myPanel.add(comboBox_1, "cell 1 2,growx");
+				
+				JLabel lblSetBackgroundColour = new JLabel("BackGround Colour:");
+				myPanel.add(lblSetBackgroundColour, "cell 0 3,alignx trailing");
+				
+				
+				JComboBox <String> comboBox_2 = new JComboBox<String>(colours1);
+				myPanel.add(comboBox_2, "cell 1 3,growx");
+
+				int result = JOptionPane.showConfirmDialog(frame, myPanel, "Set Font",
+						JOptionPane.OK_CANCEL_OPTION);
+				if (result == JOptionPane.OK_OPTION) {				
+					Integer temp = (Integer)comboBox.getSelectedItem();				
+					setOrGetPref("FontSize",  Integer.toString(temp), "set");
+					setOrGetPref("FourgColour", (String)comboBox_1.getSelectedItem(), "set");
+					setOrGetPref("BackColour", (String)comboBox_2.getSelectedItem(), "set"); 
+					for(DataNode dn:mapper.values() ) { 
+						dn.changeFont(Integer.toString(temp), (String)comboBox_1.getSelectedItem(), (String)comboBox_2.getSelectedItem());
 					}
 				}
-				filePath = fileToSave.toString();
-				fileName = filePath.replaceFirst(".*/([^/?]+).*", "$1");
-				addTab(tabbedPane);
-				setTreeWD("display");
 			}
 		});
-		panel_6.add(btnNewButton_2);
-		panel_6.add(btnNewButton_1);
-
-		JButton btnNewFile = new JButton("Save");
-		btnNewFile.setToolTipText("Save foreground tab");
-		btnNewFile.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				if (activeTab != null && !activeTab.isEmpty()) {
-					saveFile(mapper.get(activeTab));
-				} else
-					JOptionPane.showMessageDialog(frame, "No File to Save!");
-			}
-		});
-		panel_6.add(btnNewFile);
-
-		JButton btnNewButton_3 = new JButton("Delete");
-		btnNewButton_3.setToolTipText("Delete file from working directory");
-		btnNewButton_3.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				deleteFile(tabbedPane);
-			}
-		});
-		panel_6.add(btnNewButton_3);
-
-		JMenuBar menuBar = new JMenuBar();
-		frame.setJMenuBar(menuBar);
-
-		JMenu mnNewMenu = new JMenu("Options");
-		menuBar.add(mnNewMenu);
-
-		JMenuItem mntmFile = new JMenuItem("Set Font");
-		mntmFile.setMnemonic(KeyEvent.VK_E);
-		mntmFile.setToolTipText("Set theme of Text Editor");
-		mntmFile.addActionListener((ActionEvent event) -> { 
-			JPanel myPanel = new JPanel(); 
-			myPanel.setLayout(new MigLayout("", "[grow][grow]", "[grow][grow][grow][grow]")); 
-			JLabel lblSetHteFont = new JLabel("Set The Font Size:");
-			myPanel.add(lblSetHteFont, "cell 0 1,alignx trailing"); 
-			
-			Integer[] ITEMS = { 9, 10, 11, 12, 14, 16, 18, 20, 24, 32 };  
-			JComboBox <Integer> comboBox = new JComboBox<Integer>(ITEMS);		 
-			myPanel.add(comboBox, "cell 1 1,growx");
-			 
-			JLabel lblSetFourgroun = new JLabel("Set Fourground colour:");
-			myPanel.add(lblSetFourgroun, "cell 0 2,alignx trailing");
-			
-			String[] colours = { "Black", "Blue", "Gray", "Green", "Orange", "Red", "White", "Yellow", "Pink"};
-			JComboBox <String> comboBox_1 = new JComboBox<String>(colours);
-			myPanel.add(comboBox_1, "cell 1 2,growx");
-			
-			JLabel lblSetBackgroundColour = new JLabel("Set BackGround Colour:");
-			myPanel.add(lblSetBackgroundColour, "cell 0 3,alignx trailing");
-			
-			JComboBox <String> comboBox_2 = new JComboBox<String>(colours);
-			myPanel.add(comboBox_2, "cell 1 3,growx");
-
-			int result = JOptionPane.showConfirmDialog(frame, myPanel, "Set Font values",
-					JOptionPane.OK_CANCEL_OPTION);
-			if (result == JOptionPane.OK_OPTION) {				
-				Integer temp = (Integer)comboBox.getSelectedItem();				
-				setOrGetPref("FontSize",  Integer.toString(temp), "set");
-				setOrGetPref("FourgColour", (String)comboBox_1.getSelectedItem(), "set");
-				setOrGetPref("BackColour", (String)comboBox_2.getSelectedItem(), "set"); 
-				for(DataNode dn:mapper.values() ) { 
-					dn.changeFont(Integer.toString(temp), (String)comboBox_1.getSelectedItem(), (String)comboBox_2.getSelectedItem());
-				}
-			}
-		});
-		mnNewMenu.add(mntmFile);
-		
-		JMenuItem mntmNewMenuItem = new JMenuItem("Set Theme");
-		mntmNewMenuItem.setMnemonic(KeyEvent.VK_E);
-		mntmNewMenuItem.setToolTipText("Set theme of Text Editor");
-		mntmNewMenuItem.addActionListener((ActionEvent event) -> {
-			String[] values = { "Aluminium", "Smart", "Noire", "Acryl", "Aero", "Fast", "HiFi", "Texture", "McWin",
-					"Mint", "Bernstein", "Luna", "Texture" };
-			Object selected = JOptionPane.showInputDialog(frame, "Choose Your  Theme", "Selection",
-					JOptionPane.DEFAULT_OPTION, null, values, "0");
-			if (selected != null) {
-				setOrGetPref("Theme", selected.toString().toLowerCase() + "." + selected.toString(), "set");
-				try {
-					UIManager.setLookAndFeel("com.jtattoo.plaf." + prefs.get("Theme", "noire.Noire") + "LookAndFeel");
-				} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-						| UnsupportedLookAndFeelException e1) {
-					e1.printStackTrace();
-				}
-				frame.setVisible(false);
-				SwingUtilities.updateComponentTreeUI(frame);
-				frame.setVisible(true);
-			}
-		});
-		mnNewMenu.add(mntmNewMenuItem);
-		
-		setTreeWD("display");
-		
-		listener = new MyKeyListener();
-		frame.setFocusable(false);   
 	}
 	
 	/**
-	 * delete file form memory
+	 * Sets the theme of the window
+	 */
+	private void setTheme() {
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				String[] values = { "Aluminium", "Smart", "Noire", "Acryl", "Aero", "Fast", "HiFi", "Texture", "McWin",
+						"Mint", "Bernstein", "Luna", "Texture" };
+				Object selected = JOptionPane.showInputDialog(frame, "Choose Your  Theme", "Selection",
+						JOptionPane.DEFAULT_OPTION, null, values, "0");
+				if (selected != null) {
+					setOrGetPref("Theme", selected.toString().toLowerCase() + "." + selected.toString(), "set");
+					try {
+						UIManager.setLookAndFeel(
+								"com.jtattoo.plaf." + prefs.get("Theme", "noire.Noire") + "LookAndFeel");
+					} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+							| UnsupportedLookAndFeelException e1) {
+						e1.printStackTrace();
+					}
+					frame.setVisible(false);
+					SwingUtilities.updateComponentTreeUI(frame);
+					frame.setVisible(true);
+				}
+			}
+		});
+	}
+	
+	
+	/**
+	 * Deletes file from memory
 	 * @param tabbedPane
 	 */
 	protected void deleteFile(JTabbedPane tabbedPane) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				File file = new File(filePath);
-				if (!file.isDirectory()) {
-					if (fileName != null && !fileName.isEmpty()) {
-						int reply = JOptionPane.showConfirmDialog(frame, "Delete Following File: " + fileName, "Delete",
-								JOptionPane.YES_NO_OPTION);
-						if (reply == JOptionPane.YES_OPTION) {
-							if (file.delete()) {
-								String temp = null;
-								for (String key : mapper.keySet()) {
-									if (fileName.contentEquals(key)) {
-										for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-											if (tabbedPane.getTitleAt(i).equals(fileName))
-												tabbedPane.remove(i);
-											temp = key; 											
+				if (fileName != null && !fileName.isEmpty()) {
+					File file = new File(filePath);
+					if (!file.isDirectory()) {
+						if (fileName != null && !fileName.isEmpty()) {
+							int reply = JOptionPane.showConfirmDialog(frame, "Delete Following File: " + fileName,
+									"Delete", JOptionPane.YES_NO_OPTION);
+							if (reply == JOptionPane.YES_OPTION) {
+								if (file.delete()) {
+									String temp = null;
+									for (String key : mapper.keySet()) {
+										if (fileName.contentEquals(key)) {
+											for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+												if (tabbedPane.getTitleAt(i).equals(fileName))
+													tabbedPane.remove(i);
+												temp = key;
+											}
 										}
 									}
-								}
-								if(temp != null && !temp.isEmpty())
-									mapper.remove(temp);
-								setTreeWD("display");
-							} else
-								JOptionPane.showMessageDialog(frame, "Error file not Deleted:");
-						}
+									if (temp != null && !temp.isEmpty())
+										mapper.remove(temp);
+									setTreeWD("display");
+								} else
+									JOptionPane.showMessageDialog(frame, "Error file not Deleted:");
+							}
+						} else
+							JOptionPane.showMessageDialog(frame, "No File to Delete!");
+						filePath = setOrGetPref("Root", null, "get");
 					} else
-						JOptionPane.showMessageDialog(frame, "No File to Delete!");
-					filePath = setOrGetPref("Root", null, "get");
-				} else
-					JOptionPane.showMessageDialog(frame, "Cant Delete Directory!");
+						JOptionPane.showMessageDialog(frame, "Cant Delete Directory!");
+				}else
+					JOptionPane.showMessageDialog(frame, "No File to Delete!");
 			}
 		});
 	}
@@ -413,8 +504,7 @@ public class NotePad {
 	}
 
 	/**
-	 * Reads text form a JTextArea and writes to specified file.
-	 * 
+	 * Reads text form a JTextArea and writes to specified file. 
 	 * @param filePath
 	 * @param jta
 	 */
@@ -428,8 +518,7 @@ public class NotePad {
 	}
 
 	/**
-	 * Checks for user settings, returns setting if present
-	 * 
+	 * Checks for user settings, returns setting if present 
 	 * @param id
 	 * @param value
 	 * @param SetGet
@@ -453,8 +542,7 @@ public class NotePad {
 	}
 
 	/**
-	 * Adds a new tab to the JTabPane, with a close button.
-	 * 
+	 * Adds a new tab to the JTabPane, with a close button. 
 	 * @param tabbedPane
 	 * @throws InterruptedException
 	 * @throws InvocationTargetException
@@ -463,10 +551,20 @@ public class NotePad {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
+				
+				for (String name : mapper.keySet()) {
+					if (name.contentEquals(fileName)) {
+						for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+							if (tabbedPane.getTitleAt(i).equals(fileName))
+								tabbedPane.setSelectedIndex(i);											
+						} 					
+						return;
+					}
+				}
 				String line; 
 				DataNode dn = new DataNode(filePath, setOrGetPref("FontSize", null, "get"), setOrGetPref("FourgColour", null, "get"), setOrGetPref("BackColour", null, "get"));
 				tabbedPane.addTab(fileName, null, dn.getJs());
-				tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, new ButtonTabComponent(tabbedPane));
+				tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, new ButtonTabComponent(tabbedPane, mapper, fileName));
 				tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
 				try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
 					while ((line = br.readLine()) != null) {
@@ -477,7 +575,7 @@ public class NotePad {
 				}
 				dn.getJta().addKeyListener(listener);  
 				dn.getJta().addFocusListener(myFocusListener);
-				mapper.put(fileName, dn);
+				mapper.put(fileName, dn); 
 			}
 		});
 	}
@@ -531,7 +629,7 @@ public class NotePad {
 				scrollPane_1.setViewportView(tree);
 				tree.addTreeSelectionListener(new TreeSelectionListener() {
 					@Override
-					public void valueChanged(TreeSelectionEvent e) {
+					public void valueChanged(TreeSelectionEvent e) { 
 						DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree
 								.getLastSelectedPathComponent();
 						Object userObject = selectedNode.getUserObject();
@@ -539,12 +637,26 @@ public class NotePad {
 						fileName = filePath.replaceFirst(".*/([^/?]+).*", "$1");
 					}
 				});
+				
+				MouseListener ml = new MouseAdapter() {
+				    public void mousePressed(MouseEvent e) {
+				    	int selRow = tree.getRowForLocation(e.getX(), e.getY());
+				    	if(selRow != -1) {
+				            if(e.getClickCount() == 2) {
+				            	if (filePath != null && filePath != setOrGetPref("Root", null, "get")) {
+									addTab(tabbedPane);
+								} 
+				            }
+				    	}
+				    }
+				};
+				tree.addMouseListener(ml);
 			}
 		});
 	}
 	
 	/**
-	 * helper class KeyListener
+	 * Helper class KeyListener
 	 */
 	public class MyKeyListener implements KeyListener {
 
@@ -593,7 +705,7 @@ public class NotePad {
 	}
 
 	/**
-	 * helper class for JTree Creation
+	 * Helper class for JTree Creation
 	 */
 	class FileTreeCellRenderer extends DefaultTreeCellRenderer {
 		private static final long serialVersionUID = 1L;
@@ -612,7 +724,7 @@ public class NotePad {
 	}	
 	
 	/**
-	 * helper class Focus Listener
+	 * Helper class Focus Listener
 	 */
 	class MyFocusListener implements FocusListener {
 

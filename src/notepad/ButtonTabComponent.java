@@ -36,6 +36,7 @@ import javax.swing.*;
 import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashMap;
 
 /**
  * Component to be used as tabComponent;
@@ -48,15 +49,18 @@ public class ButtonTabComponent extends JPanel {
 	 */
 	private static final long serialVersionUID = 1L;
 	private final JTabbedPane pane;
-
-    public ButtonTabComponent(final JTabbedPane pane) {
-        //unset default FlowLayout' gaps
+	private HashMap<String, DataNode> mapper;
+	private String fileName;
+	
+    public ButtonTabComponent(final JTabbedPane pane, HashMap<String, DataNode> mapper, String fileName) { 
         super(new FlowLayout(FlowLayout.LEFT, 0, 0));
         if (pane == null) {
             throw new NullPointerException("TabbedPane is null");
         }
         this.pane = pane;
         setOpaque(false);
+        this.mapper = mapper;
+        this.fileName = fileName;
         
         //make JLabel read titles from JTabbedPane
         JLabel label = new JLabel() {
@@ -110,12 +114,20 @@ public class ButtonTabComponent extends JPanel {
             addActionListener(this);
         }
 
-        public void actionPerformed(ActionEvent e) {
-            int i = pane.indexOfTabComponent(ButtonTabComponent.this);
-            if (i != -1) {
-                pane.remove(i);
-            }
-        }
+		public void actionPerformed(ActionEvent e) {
+			int i = pane.indexOfTabComponent(ButtonTabComponent.this);
+			if (i != -1) {
+				String temp = null;
+				for (String key : mapper.keySet()) {
+					if (fileName.contentEquals(key)) {
+						temp = key;
+					}
+				}
+				pane.remove(i);
+				if (temp != null && !temp.isEmpty())
+					mapper.remove(temp);
+			}
+		}
 
         //we don't want to update UI for this button
         public void updateUI() {
