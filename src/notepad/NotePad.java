@@ -386,8 +386,7 @@ public class NotePad {
 				JLabel lblSetFourgroun = new JLabel("Fourground Colour:");
 				myPanel.add(lblSetFourgroun, "cell 0 2,alignx trailing");
 				 
-				String[] colours = { "Green", "Blue", "Gray", "BLack", "Orange", "Red", "White", "Yellow", "Pink"};
-				String[] colours1 = { "Black", "Blue", "Gray", "Green", "Orange", "Red", "White", "Yellow", "Pink"};
+				String[] colours  = { "Black", "Blue", "Gray", "Green", "Orange", "Red", "White", "Yellow", "Pink" };
 				
 				JComboBox <String> comboBox_1 = new JComboBox<String>(colours);
 				myPanel.add(comboBox_1, "cell 1 2,growx");
@@ -396,7 +395,7 @@ public class NotePad {
 				myPanel.add(lblSetBackgroundColour, "cell 0 3,alignx trailing");
 				
 				
-				JComboBox <String> comboBox_2 = new JComboBox<String>(colours1);
+				JComboBox <String> comboBox_2 = new JComboBox<String>(colours);
 				myPanel.add(comboBox_2, "cell 1 3,growx");
 
 				int result = JOptionPane.showConfirmDialog(frame, myPanel, "Set Font",
@@ -422,7 +421,7 @@ public class NotePad {
 			@Override
 			public void run() {
 				String[] values = { "Aluminium", "Smart", "Noire", "Acryl", "Aero", "Fast", "HiFi", "Texture", "McWin",
-						"Mint", "Bernstein", "Luna", "Texture" };
+						"Mint", "Bernstein", "Luna"};
 				Object selected = JOptionPane.showInputDialog(frame, "Choose Your  Theme", "Selection",
 						JOptionPane.DEFAULT_OPTION, null, values, "0");
 				if (selected != null) {

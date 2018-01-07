@@ -1,4 +1,6 @@
 # NotePad
-Because I can't find an application for taking notes that I like.
-I am creaing one that has all the features that I want.
+Open-souce text editor.
+I have tried to create a text editor that has certain componets that I find usefull. Such as a persistant  working directory, multiple tabs, easy to use, and hopefull fluid to control.
+![alt text](screenshots/TextEditor.png "Text Editor")
 
+![alt text](screenshots/NotePad.png "Alternate Look")

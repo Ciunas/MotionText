@@ -1,9 +1,9 @@
 package notepad;
 
 import java.awt.Color;
-import java.awt.Font;
+import java.awt.Font;  
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.JTextArea; 
 
 public class DataNode {
 
@@ -16,8 +16,9 @@ public class DataNode {
 		jta.setForeground(setColour(fourgColour));
 		jta.setBackground(setColour(backColour));
 		jta.setFont(new Font("Dialog", Font.PLAIN, Integer.parseInt(fontSize))); 
-		js.setViewportView(jta); 
+		jta.setCaret(new Caret());
 		jta.setFocusable(true); 
+		js.setViewportView(jta);  
 	}
 	
 	public void changeFont(String fontSize, String fourgColour, String backColour){ 
@@ -28,12 +29,13 @@ public class DataNode {
 		jta.setFocusable(true);
 	}
 	
+	
 	private Color setColour(String colStr) {
 		Color[] col = { Color.BLACK, Color.BLUE, Color.GRAY, Color.GREEN, Color.ORANGE, Color.RED, Color.WHITE,
 				Color.YELLOW, Color.PINK };
 		String[] colours = { "Black", "Blue", "Gray", "Green", "Orange", "Red", "White", "Yellow", "Pink" };
 		int i;
-		for (i = 0; i < colours.length; i++) {
+		for (i = 0; i < colours.length ; i++) {
 			if (colStr.equals(colours[i])) {
 				break;
 			}
@@ -73,5 +75,7 @@ public class DataNode {
 	public void appendJText(String text) {
 		jta.append(text);
 	}
+	
+	
 	 
 }
