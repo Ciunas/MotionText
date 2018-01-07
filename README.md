@@ -11,5 +11,4 @@ Text Editor.
 
 Alternate Look.
 
-![alt text](screenshots/NotePad.png "Alternate Look"
-
+![alt text](screenshots/NotePad.png "Alternate Look")
