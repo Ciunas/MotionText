@@ -1,7 +1,9 @@
 package notepad;
 
 import java.awt.Color;
-import java.awt.Font;  
+import java.awt.Font;
+import java.awt.Insets;
+
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea; 
 
@@ -11,25 +13,26 @@ public class DataNode {
 	JTextArea jta = new JTextArea(); 
 	String location;
 	
-	public DataNode(String location, String fontSize, String fourgColour, String backColour){
+	public DataNode(String location, String fontSize, String fourgColour, String backColour, String fontName){
 		this.location = location;  
 		jta.setForeground(setColour(fourgColour));
 		jta.setBackground(setColour(backColour));
-		jta.setFont(new Font("Dialog", Font.PLAIN, Integer.parseInt(fontSize))); 
-		jta.setCaret(new Caret());
+		jta.setFont(new Font(fontName, Font.PLAIN, Integer.parseInt(fontSize))); 
+		jta.setCaretColor(Color.red);
+		jta.putClientProperty("caretWidth", 2);
 		jta.setFocusable(true); 
+		jta.setMargin( new Insets(6, 6, 0, 0) ); //top,left,bottom,right
 		js.setViewportView(jta);  
 	}
 	
-	public void changeFont(String fontSize, String fourgColour, String backColour){ 
+	public void changeFont(String fontSize, String fourgColour, String backColour, String fontName ){ 
 		jta.setForeground(setColour(fourgColour));
 		jta.setBackground(setColour(backColour));
-		jta.setFont(new Font("Dialog", Font.PLAIN, Integer.parseInt(fontSize))); 
+		jta.setFont(new Font(fontName, Font.PLAIN, Integer.parseInt(fontSize))); 
 		js.setViewportView(jta); 
 		jta.setFocusable(true);
 	}
-	
-	
+		
 	private Color setColour(String colStr) {
 		Color[] col = { Color.BLACK, Color.BLUE, Color.GRAY, Color.GREEN, Color.ORANGE, Color.RED, Color.WHITE,
 				Color.YELLOW, Color.PINK };
@@ -41,7 +44,7 @@ public class DataNode {
 			}
 		}
 		return col[i];
-	}
+	} 
 
 	public String getLocation() {
 		return location;
@@ -74,8 +77,5 @@ public class DataNode {
 	
 	public void appendJText(String text) {
 		jta.append(text);
-	}
-	
-	
-	 
+	}	 
 }

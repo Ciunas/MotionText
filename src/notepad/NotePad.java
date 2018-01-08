@@ -17,7 +17,7 @@ import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.TreeSelectionListener; 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer; 
 import javax.swing.tree.TreeSelectionModel;
@@ -29,6 +29,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.prefs.Preferences;
@@ -52,6 +53,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JMenu;
 import java.awt.Font;
+import java.awt.GraphicsEnvironment;
 import javax.swing.SwingConstants; 
 import javax.swing.border.TitledBorder;
 
@@ -124,16 +126,18 @@ public class NotePad {
 
 		JPanel panel_1 = new JPanel();
 		panel.add(panel_1, BorderLayout.SOUTH);
-		panel_1.setLayout(new MigLayout("", "[grow][grow][grow][grow][]", "[15px]"));
+		panel_1.setLayout(new MigLayout("", "[grow][grow][grow][grow][]", "[::10px]"));
 		
 		lblNewLabel_2 = new JLabel("");
+		lblNewLabel_2.setVerticalAlignment(SwingConstants.TOP);
 		lblNewLabel_2.setHorizontalAlignment(SwingConstants.CENTER);
-		lblNewLabel_2.setFont(new Font("Dialog", Font.BOLD, 12));
+		lblNewLabel_2.setFont(new Font("Dialog", Font.PLAIN, 12));
 		panel_1.add(lblNewLabel_2, "cell 2 0,grow");
 
 		JLabel lblNewLabel_1 = new JLabel("Made By: Ciunas Bennett");
+		lblNewLabel_1.setVerticalAlignment(SwingConstants.TOP);
 		lblNewLabel_1.setHorizontalAlignment(SwingConstants.RIGHT);
-		lblNewLabel_1.setFont(new Font("Dialog", Font.ITALIC, 12));
+		lblNewLabel_1.setFont(new Font("Dialog", Font.PLAIN, 12));
 		panel_1.add(lblNewLabel_1, "cell 4 0,alignx left,aligny top");
 
 		JPanel panel_2 = new JPanel();
@@ -143,6 +147,7 @@ public class NotePad {
 		myFocusListener = new MyFocusListener();
 		
 		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
 		panel_2.add(tabbedPane, BorderLayout.CENTER);
 		ChangeListener changeListener = new ChangeListener() {
 			public void stateChanged(ChangeEvent changeEvent) { 
@@ -336,8 +341,7 @@ public class NotePad {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-						write = true;
-						System.out.println(write);
+						write = true; 
 					} 
 				} else if (reply == JOptionPane.NO_OPTION){
 					JFileChooser fileChooser = new JFileChooser();
@@ -348,8 +352,7 @@ public class NotePad {
 						try {
 							fileToSave.createNewFile();
 							write = true; 
-						} catch (IOException e) {
-							System.out.println("Exception");
+						} catch (IOException e) { 
 							e.printStackTrace();
 						}
 						
@@ -357,8 +360,9 @@ public class NotePad {
 				} 
 				
 				if((reply == JOptionPane.NO_OPTION || reply == JOptionPane.YES_OPTION) && write == true) { 
-					filePath = fileToSave.toString();
-					fileName = filePath.replaceFirst(".*/([^/?]+).*", "$1");
+					filePath = fileToSave.toString(); 
+					Path p = Paths.get(filePath); 
+					fileName = p.getFileName().toString();
 					addTab(tabbedPane);
 					setTreeWD("display");
 				}
@@ -368,51 +372,60 @@ public class NotePad {
 	
 	
 	/**
-	 * Sets the clour and size fo font
+	 * Sets the colour and size of font
 	 */
 	private void setFont() {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
 				JPanel myPanel = new JPanel(); 
-				myPanel.setLayout(new MigLayout("", "[grow][grow]", "[grow][grow][grow][grow]")); 
+				myPanel.setLayout(new MigLayout("", "[grow][grow]", "[grow][grow][grow][grow][grow]")); 
 				JLabel lblSetHteFont = new JLabel("Font Size:");
 				myPanel.add(lblSetHteFont, "cell 0 1,alignx trailing"); 
 				
-				Integer[] ITEMS = { 9, 10, 11, 12, 14, 16, 18, 20, 24, 32 };  
-				JComboBox <Integer> comboBox = new JComboBox<Integer>(ITEMS);		 
+				Integer[] ITEMS = { 9, 10, 11, 12, 14, 16, 18, 20, 24, 32 }; 
+				JComboBox <Integer> comboBox = new JComboBox<Integer>(ITEMS);	
+				comboBox.getModel().setSelectedItem(Integer.parseInt(setOrGetPref("FontSize", null, "get")));
 				myPanel.add(comboBox, "cell 1 1,growx");
-				 
-				JLabel lblSetFourgroun = new JLabel("Fourground Colour:");
-				myPanel.add(lblSetFourgroun, "cell 0 2,alignx trailing");
+				
+				String fonts[] = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();					
+				JLabel lblSetFontType = new JLabel("Font Type:");				
+				myPanel.add(lblSetFontType, "cell 0 2,alignx trailing");								
+				JComboBox <String> comboBox_3 = new JComboBox<String>(fonts);
+				comboBox_3.getModel().setSelectedItem(setOrGetPref("FontType", null, "get")); 
+				myPanel.add(comboBox_3, "cell 1 2,growx");
 				 
 				String[] colours  = { "Black", "Blue", "Gray", "Green", "Orange", "Red", "White", "Yellow", "Pink" };
-				
+				JLabel lblSetFourgroun = new JLabel("Foreground Colour:");
+				myPanel.add(lblSetFourgroun, "cell 0 3,alignx trailing");				 			
 				JComboBox <String> comboBox_1 = new JComboBox<String>(colours);
-				myPanel.add(comboBox_1, "cell 1 2,growx");
+				comboBox_1.getModel().setSelectedItem(setOrGetPref("FourgColour", null, "get"));
+				myPanel.add(comboBox_1, "cell 1 3,growx");
 				
-				JLabel lblSetBackgroundColour = new JLabel("BackGround Colour:");
-				myPanel.add(lblSetBackgroundColour, "cell 0 3,alignx trailing");
-				
-				
+				JLabel lblSetBackgroundColour = new JLabel("Background Colour:");				
+				myPanel.add(lblSetBackgroundColour, "cell 0 4,alignx trailing");								
 				JComboBox <String> comboBox_2 = new JComboBox<String>(colours);
-				myPanel.add(comboBox_2, "cell 1 3,growx");
-
+				comboBox_2.getModel().setSelectedItem(setOrGetPref("BackColour", null, "get"));
+				myPanel.add(comboBox_2, "cell 1 4,growx");
+				
+				
 				int result = JOptionPane.showConfirmDialog(frame, myPanel, "Set Font",
 						JOptionPane.OK_CANCEL_OPTION);
 				if (result == JOptionPane.OK_OPTION) {				
 					Integer temp = (Integer)comboBox.getSelectedItem();				
 					setOrGetPref("FontSize",  Integer.toString(temp), "set");
 					setOrGetPref("FourgColour", (String)comboBox_1.getSelectedItem(), "set");
-					setOrGetPref("BackColour", (String)comboBox_2.getSelectedItem(), "set"); 
+					setOrGetPref("BackColour", (String)comboBox_2.getSelectedItem(), "set");  
+					setOrGetPref("FontType", (String)comboBox_3.getSelectedItem(), "set" );
 					for(DataNode dn:mapper.values() ) { 
-						dn.changeFont(Integer.toString(temp), (String)comboBox_1.getSelectedItem(), (String)comboBox_2.getSelectedItem());
+						dn.changeFont(Integer.toString(temp), (String)comboBox_1.getSelectedItem(), (String)comboBox_2.getSelectedItem(), (String)comboBox_3.getSelectedItem());
 					}
 				}
 			}
 		});
 	}
 	
+ 
 	/**
 	 * Sets the theme of the window
 	 */
@@ -423,7 +436,7 @@ public class NotePad {
 				String[] values = { "Aluminium", "Smart", "Noire", "Acryl", "Aero", "Fast", "HiFi", "Texture", "McWin",
 						"Mint", "Bernstein", "Luna"};
 				Object selected = JOptionPane.showInputDialog(frame, "Choose Your  Theme", "Selection",
-						JOptionPane.DEFAULT_OPTION, null, values, "0");
+						JOptionPane.DEFAULT_OPTION, null, values, setOrGetPref("Theme", null, "get").substring(setOrGetPref("Theme", null, "get").lastIndexOf(".") + 1) );
 				if (selected != null) {
 					setOrGetPref("Theme", selected.toString().toLowerCase() + "." + selected.toString(), "set");
 					try {
@@ -450,7 +463,7 @@ public class NotePad {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				if (fileName != null && !fileName.isEmpty()) {
+				if (fileName != null && !fileName.isEmpty()) { 
 					File file = new File(filePath);
 					if (!file.isDirectory()) {
 						if (fileName != null && !fileName.isEmpty()) {
@@ -468,17 +481,19 @@ public class NotePad {
 											}
 										}
 									}
-									if (temp != null && !temp.isEmpty())
+									if (temp != null && !temp.isEmpty()) {
 										mapper.remove(temp);
+										filePath = setOrGetPref("Root", null, "get");
+									}
 									setTreeWD("display");
 								} else
 									JOptionPane.showMessageDialog(frame, "Error file not Deleted:");
 							}
 						} else
 							JOptionPane.showMessageDialog(frame, "No File to Delete!");
-						filePath = setOrGetPref("Root", null, "get");
+						
 					} else
-						JOptionPane.showMessageDialog(frame, "Cant Delete Directory!");
+						JOptionPane.showMessageDialog(frame, "No File to Delete!");
 				}else
 					JOptionPane.showMessageDialog(frame, "No File to Delete!");
 			}
@@ -528,11 +543,15 @@ public class NotePad {
 			if (id.contains("Root")) {
 				return (prefs.get(id, "."));
 			}if (id.contains("FontSize")) {
-				return (prefs.get(id, "13"));
+				return (prefs.get(id, "14"));
 			}if (id.contains("FourgColour")) {
 				return (prefs.get(id, "Black"));
 			}if (id.contains("BackColour")) {
 				return (prefs.get(id, "White"));
+			}if (id.contains("Theme")) { 
+				return (prefs.get(id, "noire.Noire"));
+			}if (id.contains("FontType")) {  
+				return (prefs.get(id, "Calibri"));
 			} else
 				return (prefs.get(id, ""));
 		} else
@@ -560,8 +579,10 @@ public class NotePad {
 						return;
 					}
 				}
-				String line; 
-				DataNode dn = new DataNode(filePath, setOrGetPref("FontSize", null, "get"), setOrGetPref("FourgColour", null, "get"), setOrGetPref("BackColour", null, "get"));
+				String line;
+				DataNode dn = new DataNode(filePath, setOrGetPref("FontSize", null, "get"),
+						setOrGetPref("FourgColour", null, "get"), setOrGetPref("BackColour", null, "get"),
+						setOrGetPref("FontType", null, "get") );
 				tabbedPane.addTab(fileName, null, dn.getJs());
 				tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, new ButtonTabComponent(tabbedPane, mapper, fileName));
 				tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
@@ -574,6 +595,7 @@ public class NotePad {
 				}
 				dn.getJta().addKeyListener(listener);  
 				dn.getJta().addFocusListener(myFocusListener);
+				dn.getJta().setCaretPosition(0);
 				mapper.put(fileName, dn); 
 			}
 		});
@@ -622,7 +644,9 @@ public class NotePad {
 					tree = new JTree(addNodes(new File(setOrGetPref("Root", null, "get"))));
 
 				tree.setRootVisible(true);
-				tree.setShowsRootHandles(true);
+				tree.setShowsRootHandles(false); 
+				tree.setToggleClickCount(10);
+				tree.setFocusable(false);
 				tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 				tree.setCellRenderer(new FileTreeCellRenderer());
 				scrollPane_1.setViewportView(tree);
@@ -633,7 +657,8 @@ public class NotePad {
 								.getLastSelectedPathComponent();
 						Object userObject = selectedNode.getUserObject();
 						filePath = userObject.toString();
-						fileName = filePath.replaceFirst(".*/([^/?]+).*", "$1");
+						Path p = Paths.get(filePath); 
+						fileName = p.getFileName().toString();
 					}
 				});
 				
@@ -728,8 +753,7 @@ public class NotePad {
 	class MyFocusListener implements FocusListener {
 
 		@Override
-		public void focusGained(FocusEvent e) {
-			System.out.println("Focus Gained");
+		public void focusGained(FocusEvent e) { 
 		}
 
 		@Override
