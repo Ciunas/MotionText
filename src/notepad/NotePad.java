@@ -4,16 +4,19 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
-import javax.swing.JTabbedPane; 
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 import javax.swing.JScrollPane;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.UnsupportedLookAndFeelException; 
 import java.awt.Color;
-import java.awt.Component;  
+import java.awt.Component;
+
+import javax.swing.Box;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.border.BevelBorder;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox; 
+import javax.swing.JFileChooser; 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -39,14 +42,12 @@ import java.awt.Dimension;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer; 
-import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
+import java.awt.event.ActionListener; 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.MouseListener; 
 import java.awt.event.ActionEvent;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -55,7 +56,9 @@ import javax.swing.JMenu;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import javax.swing.SwingConstants; 
-import javax.swing.border.TitledBorder;
+import javax.swing.border.TitledBorder; 
+import javax.swing.border.LineBorder;
+import javax.swing.ImageIcon; 
 
 /**
  * @author ciunas
@@ -73,9 +76,11 @@ public class NotePad {
 	private JLabel lblNewLabel_2;
 	private JFrame frame;
 	private JTree tree;
-	private MyFocusListener myFocusListener;
 	private MyKeyListener listener;
 	private JTabbedPane tabbedPane; 
+	private JTextField textField;
+	private JPanel panel_6;
+	private boolean state;
 
 	/**
 	 * Launch the application.
@@ -124,31 +129,37 @@ public class NotePad {
 		frame.getContentPane().add(panel, BorderLayout.CENTER);
 		panel.setLayout(new BorderLayout(0, 0));
 
-		JPanel panel_1 = new JPanel();
-		panel.add(panel_1, BorderLayout.SOUTH);
-		panel_1.setLayout(new MigLayout("", "[grow][grow][grow][grow][]", "[::10px]"));
-		
-		lblNewLabel_2 = new JLabel("");
-		lblNewLabel_2.setVerticalAlignment(SwingConstants.TOP);
-		lblNewLabel_2.setHorizontalAlignment(SwingConstants.CENTER);
-		lblNewLabel_2.setFont(new Font("Dialog", Font.PLAIN, 12));
-		panel_1.add(lblNewLabel_2, "cell 2 0,grow");
-
-		JLabel lblNewLabel_1 = new JLabel("Made By: Ciunas Bennett");
-		lblNewLabel_1.setVerticalAlignment(SwingConstants.TOP);
-		lblNewLabel_1.setHorizontalAlignment(SwingConstants.RIGHT);
-		lblNewLabel_1.setFont(new Font("Dialog", Font.PLAIN, 12));
-		panel_1.add(lblNewLabel_1, "cell 4 0,alignx left,aligny top");
-
 		JPanel panel_2 = new JPanel();
+		panel_2.setBorder(new LineBorder(Color.GRAY));
 		panel.add(panel_2, BorderLayout.CENTER);
 		panel_2.setLayout(new BorderLayout(0, 0));
-
-		myFocusListener = new MyFocusListener();
 		
 		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		tabbedPane.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
+		tabbedPane.setBorder(null);
 		panel_2.add(tabbedPane, BorderLayout.CENTER);
+		
+		JPanel panel_1 = new JPanel();
+		panel_1.setPreferredSize(new Dimension(15, 15));
+		panel_2.add(panel_1, BorderLayout.SOUTH);
+		panel_1.setLayout(new BorderLayout(0, 0));
+		
+		lblNewLabel_2 = new JLabel("");
+		lblNewLabel_2.setFont(new Font("DejaVu Sans Mono", Font.PLAIN, 12));
+		
+		panel_6 = new JPanel();
+		panel_6.setVisible(state =  false);
+		panel_2.add(panel_6, BorderLayout.SOUTH);
+		panel_6.setLayout(new MigLayout("", "[grow][][]", "[15px]"));
+		
+		textField = new JTextField();
+		panel_6.add(textField, "cell 0 0,growx");
+		textField.setColumns(10);
+		
+		JCheckBox chckbxExact = new JCheckBox("Exact");
+		panel_6.add(chckbxExact, "cell 1 0");
+		
+		JButton lblFind = new JButton("Find");
+		panel_6.add(lblFind, "cell 2 0,alignx trailing");
 		ChangeListener changeListener = new ChangeListener() {
 			public void stateChanged(ChangeEvent changeEvent) { 
 				changeEventTab(changeEvent);
@@ -159,7 +170,7 @@ public class NotePad {
 		JPanel panel_3 = new JPanel();
 		panel_3.setPreferredSize(new Dimension(250, 10));
 		panel_3.setBackground(Color.LIGHT_GRAY);
-		panel_3.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
+		panel_3.setBorder(new LineBorder(Color.GRAY));
 		panel.add(panel_3, BorderLayout.WEST);
 		panel_3.setLayout(new BorderLayout(0, 0));
 
@@ -275,6 +286,14 @@ public class NotePad {
 			setTheme();
 		});
 		mnNewMenu.add(mntmNewMenuItem);
+				
+		JMenuItem mntmNewMenuItem_2 = new JMenuItem("Set Line Encoding");
+		mnNewMenu.add(mntmNewMenuItem_2);
+		mntmNewMenuItem.setMnemonic(KeyEvent.VK_E);
+		mntmNewMenuItem.setToolTipText("Set theme of Text Editor");
+		mntmNewMenuItem_2.addActionListener((ActionEvent event) -> {
+			setLineEncoding();
+		});
 		
 		JMenuItem mntmNewMenuItem_1 = new JMenuItem("Help");
 		mntmNewMenuItem.setMnemonic(KeyEvent.VK_E);
@@ -289,7 +308,10 @@ public class NotePad {
 
 		});
 		mnNewMenu.add(mntmNewMenuItem_1);
-		
+		 
+		menuBar.add(Box.createHorizontalGlue()); 
+		menuBar.add(lblNewLabel_2);
+		 
 		setTreeWD("display");		
 		listener = new MyKeyListener();
 		frame.setFocusable(false);   
@@ -311,11 +333,9 @@ public class NotePad {
 				if(key.contentEquals(temp)) {
 					DataNode dn = mapper.get(key);
 					dn.getJta().removeKeyListener(listener); 
-					dn.jta.removeFocusListener(myFocusListener);
 				}else if(key.contentEquals(activeTab)) {
 					DataNode dn = mapper.get(key);
-					dn.getJta().addKeyListener(listener); 
-					dn.jta.addFocusListener(myFocusListener);
+					dn.getJta().addKeyListener(listener);  
 				}
 			} 					
 		}		
@@ -454,6 +474,20 @@ public class NotePad {
 		});
 	}
 	
+	/**
+	 * Sets line encoding of written file
+	 */
+	private void setLineEncoding() {
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				if (JOptionPane.showConfirmDialog(frame, "Use Linux Line Encoding", "Choose Linux",
+						JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+					setOrGetPref("LineEncoding",  "Yes", "set");
+				}
+			}
+		});
+	}
 	
 	/**
 	 * Deletes file from memory
@@ -524,8 +558,12 @@ public class NotePad {
 	 */
 	private void saveFile(DataNode dataNode) {  
 		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(dataNode.getLocation()))) {
-			bw.write(dataNode.getJta().getText()); 
-			displayInfo("File Saved: " + dataNode.getLocation().replaceFirst(".*/([^/?]+).*", "$1"));
+			if(setOrGetPref("LineEncoding", null, "get").contentEquals("Yes")) {
+				bw.write(dataNode.getJta().getText()); 
+			}else
+				dataNode.getJta().write(bw);
+			Path p = Paths.get(dataNode.getLocation()); 
+			displayInfo("Saved: " + p.getFileName().toString());
 		} catch (Exception e) {
 			System.err.println("Error: " + e.getMessage());
 		}
@@ -540,20 +578,33 @@ public class NotePad {
 	 */
 	private String setOrGetPref(String id, String value, String SetGet) {
 		if (SetGet.equals("get")) {
-			if (id.contains("Root")) {
-				return (prefs.get(id, "."));
-			}if (id.contains("FontSize")) {
-				return (prefs.get(id, "14"));
-			}if (id.contains("FourgColour")) {
-				return (prefs.get(id, "Black"));
-			}if (id.contains("BackColour")) {
-				return (prefs.get(id, "White"));
-			}if (id.contains("Theme")) { 
-				return (prefs.get(id, "noire.Noire"));
-			}if (id.contains("FontType")) {  
-				return (prefs.get(id, "Calibri"));
-			} else
-				return (prefs.get(id, ""));
+			String temp = null;
+			switch(id) {			
+			case "Root":
+				temp = prefs.get(id, ".");
+				break;
+			case "FontSize":
+				temp = prefs.get(id, "14");
+				break;
+			case "FourgColour":
+				temp = prefs.get(id, "Black");
+				break;
+			case "BackColour":
+				temp = prefs.get(id, "White");
+				break;
+			case "Theme":
+				temp = prefs.get(id, "noire.Noire");
+				break;
+			case "FontType":
+				temp = prefs.get(id, "Calibri");
+				break;
+			case "LineEncoding":
+				temp = prefs.get(id, "No");
+				break;
+			 default:
+				 break;
+			}				
+			return temp;
 		} else
 			prefs.put(id, value);
 		return "";
@@ -594,7 +645,7 @@ public class NotePad {
 					e.printStackTrace();
 				}
 				dn.getJta().addKeyListener(listener);  
-				dn.getJta().addFocusListener(myFocusListener);
+				
 				dn.getJta().setCaretPosition(0);
 				mapper.put(fileName, dn); 
 			}
@@ -609,12 +660,14 @@ public class NotePad {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				Integer waitSeconds = 5;
-				lblNewLabel_2.setText(info);
+				Integer waitSeconds = 3;
+				//lblNewLabel_2.setText(info);
+				lblNewLabel_2.setIcon(new ImageIcon(NotePad.class.getResource("/resources/ic_penguin.gif"))); 
 				Timer timer = new Timer(waitSeconds * 1000, new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						lblNewLabel_2.setText("");
+						lblNewLabel_2.setIcon(null);
 					}
 				});
 				timer.start();
@@ -686,6 +739,7 @@ public class NotePad {
 
 		boolean ctl = false;
 		boolean s = false;
+		boolean f = false;
 
 		@Override
 		public void keyTyped(KeyEvent e) { 
@@ -700,6 +754,9 @@ public class NotePad {
 			case KeyEvent.VK_S:
 				s = true;
 				break;
+			case KeyEvent.VK_F:
+				f = true;
+				break;
 			}
 		}
 
@@ -712,6 +769,10 @@ public class NotePad {
 				} else
 					JOptionPane.showMessageDialog(frame, "No File to Save!");
 			}
+			else if(ctl == true && f == true) { 
+				state = !state;				
+				panel_6.setVisible(state);
+			}
 
 			switch (e.getKeyCode()) {
 			case KeyEvent.VK_CONTROL:
@@ -720,13 +781,18 @@ public class NotePad {
 			case KeyEvent.VK_S:
 				s = false;
 				break;
+			case KeyEvent.VK_F:
+				f = false;
+				break;
 			 default:
 				s = false;
 				ctl = false;
+				f = false;
 				break;
 			}
 		}
-	}
+	} 
+ 
 
 	/**
 	 * Helper class for JTree Creation
@@ -746,19 +812,4 @@ public class NotePad {
 			return super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
 		}
 	}	
-	
-	/**
-	 * Helper class Focus Listener
-	 */
-	class MyFocusListener implements FocusListener {
-
-		@Override
-		public void focusGained(FocusEvent e) { 
-		}
-
-		@Override
-		public void focusLost(FocusEvent e) {
-
-		}
-	}
 }
