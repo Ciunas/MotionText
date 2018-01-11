@@ -8,21 +8,20 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JScrollPane;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException; 
+import javax.swing.UnsupportedLookAndFeelException;
 import java.awt.Color;
 import java.awt.Component;
-
 import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox; 
-import javax.swing.JFileChooser; 
+import javax.swing.JButton; 
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener; 
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.text.BadLocationException; 
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer; 
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.GridLayout;
 import java.io.BufferedReader;
@@ -33,21 +32,21 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
+import java.nio.file.Paths; 
+import java.util.HashMap; 
 import java.util.prefs.Preferences;
 import net.miginfocom.swing.MigLayout;
 import javax.swing.JLabel;
 import java.awt.Dimension;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer; 
-import java.awt.event.ActionListener; 
+import javax.swing.Timer;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener; 
+import java.awt.event.MouseListener;
 import java.awt.event.ActionEvent;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -55,10 +54,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JMenu;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
-import javax.swing.SwingConstants; 
-import javax.swing.border.TitledBorder; 
+import javax.swing.border.TitledBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.ImageIcon; 
+import javax.swing.ImageIcon;
 
 /**
  * @author ciunas
@@ -77,10 +75,11 @@ public class NotePad {
 	private JFrame frame;
 	private JTree tree;
 	private MyKeyListener listener;
-	private JTabbedPane tabbedPane; 
+	private JTabbedPane tabbedPane;
 	private JTextField textField;
 	private JPanel panel_6;
 	private boolean state;
+	WordSearch ws = null;
 
 	/**
 	 * Launch the application.
@@ -133,40 +132,84 @@ public class NotePad {
 		panel_2.setBorder(new LineBorder(Color.GRAY));
 		panel.add(panel_2, BorderLayout.CENTER);
 		panel_2.setLayout(new BorderLayout(0, 0));
-		
+
 		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		tabbedPane.setBorder(null);
 		panel_2.add(tabbedPane, BorderLayout.CENTER);
-		
+
 		JPanel panel_1 = new JPanel();
 		panel_1.setPreferredSize(new Dimension(15, 15));
 		panel_2.add(panel_1, BorderLayout.SOUTH);
 		panel_1.setLayout(new BorderLayout(0, 0));
-		
+
 		lblNewLabel_2 = new JLabel("");
 		lblNewLabel_2.setFont(new Font("DejaVu Sans Mono", Font.PLAIN, 12));
-		
+
 		panel_6 = new JPanel();
-		panel_6.setVisible(state =  false);
+		panel_6.setVisible(state = false);
 		panel_2.add(panel_6, BorderLayout.SOUTH);
-		panel_6.setLayout(new MigLayout("", "[grow][][]", "[15px]"));
-		
+		panel_6.setLayout(new MigLayout("", "[grow][][][]", "[15px]"));
+
 		textField = new JTextField();
 		panel_6.add(textField, "cell 0 0,growx");
 		textField.setColumns(10);
-		
-		JCheckBox chckbxExact = new JCheckBox("Exact");
+		 
+		JButton chckbxExact = new JButton("Find");
+		chckbxExact.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (!textField.getText().contentEquals("")) {
+					DataNode dn = null;
+					for (String key : mapper.keySet()) {
+						if (key.contentEquals(activeTab)) {
+							dn = mapper.get(key); 
+							try {
+								search(dn, textField);
+							} catch (BadLocationException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+			}
+		});
 		panel_6.add(chckbxExact, "cell 1 0");
-		
-		JButton lblFind = new JButton("Find");
+
+		JButton lblFind = new JButton("");
+		lblFind.setIcon(new ImageIcon(NotePad.class.getResource("/resources/up.png")));
+		lblFind.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+					try {
+						ws.backwards();
+					} catch (BadLocationException e) { 
+						e.printStackTrace();
+					}
+			}
+		});
 		panel_6.add(lblFind, "cell 2 0,alignx trailing");
+
+		JButton btnFind = new JButton("");
+		btnFind.setIcon(new ImageIcon(NotePad.class.getResource("/resources/down.png")));
+		btnFind.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				try {
+					ws.forward();
+				} catch (BadLocationException e) { 
+					e.printStackTrace();
+				}
+			}
+		});
+
+		panel_6.add(btnFind, "cell 3 0");
+
 		ChangeListener changeListener = new ChangeListener() {
-			public void stateChanged(ChangeEvent changeEvent) { 
+			public void stateChanged(ChangeEvent changeEvent) {
+				panel_6.setVisible(state = false);
 				changeEventTab(changeEvent);
 			}
 		};
 		tabbedPane.addChangeListener(changeListener);
-		
+
 		JPanel panel_3 = new JPanel();
 		panel_3.setPreferredSize(new Dimension(250, 10));
 		panel_3.setBackground(Color.LIGHT_GRAY);
@@ -205,7 +248,7 @@ public class NotePad {
 
 		JLabel lblNewLabel = new JLabel("Tree");
 		panel_7.add(lblNewLabel, "cell 0 0 2 1");
-		
+
 		JPanel panel_8 = new JPanel();
 		panel_8.setBorder(new TitledBorder(null, "File stuff", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		panel_3.add(panel_8, BorderLayout.SOUTH);
@@ -218,11 +261,12 @@ public class NotePad {
 			public void actionPerformed(ActionEvent arg0) {
 				if (filePath != null && filePath != setOrGetPref("Root", null, "get")) {
 					addTab(tabbedPane);
-				} else { 
+				} else {
 					EventQueue.invokeLater(new Runnable() {
 						@Override
 						public void run() {
-							JOptionPane.showMessageDialog(frame, "No File Highlighted!", "Hay", JOptionPane.ERROR_MESSAGE);  
+							JOptionPane.showMessageDialog(frame, "No File Highlighted!", "Hay",
+									JOptionPane.ERROR_MESSAGE);
 						}
 					});
 				}
@@ -249,10 +293,10 @@ public class NotePad {
 					EventQueue.invokeLater(new Runnable() {
 						@Override
 						public void run() {
-							JOptionPane.showMessageDialog(frame, "No File to Save!", "Hay", JOptionPane.ERROR_MESSAGE);  
+							JOptionPane.showMessageDialog(frame, "No File to Save!", "Hay", JOptionPane.ERROR_MESSAGE);
 						}
 					});
-				} 
+				}
 			}
 		});
 
@@ -263,8 +307,8 @@ public class NotePad {
 			public void actionPerformed(ActionEvent arg0) {
 				deleteFile(tabbedPane);
 			}
-		}); 
-		
+		});
+
 		JMenuBar menuBar = new JMenuBar();
 		frame.setJMenuBar(menuBar);
 
@@ -274,11 +318,11 @@ public class NotePad {
 		JMenuItem mntmFile = new JMenuItem("Set Font");
 		mntmFile.setMnemonic(KeyEvent.VK_E);
 		mntmFile.setToolTipText("Set theme of Text Editor");
-		mntmFile.addActionListener((ActionEvent event) -> { 
+		mntmFile.addActionListener((ActionEvent event) -> {
 			setFont();
 		});
 		mnNewMenu.add(mntmFile);
-		
+
 		JMenuItem mntmNewMenuItem = new JMenuItem("Set Theme");
 		mntmNewMenuItem.setMnemonic(KeyEvent.VK_E);
 		mntmNewMenuItem.setToolTipText("Set theme of Text Editor");
@@ -286,7 +330,7 @@ public class NotePad {
 			setTheme();
 		});
 		mnNewMenu.add(mntmNewMenuItem);
-				
+
 		JMenuItem mntmNewMenuItem_2 = new JMenuItem("Set Line Encoding");
 		mnNewMenu.add(mntmNewMenuItem_2);
 		mntmNewMenuItem.setMnemonic(KeyEvent.VK_E);
@@ -294,7 +338,7 @@ public class NotePad {
 		mntmNewMenuItem_2.addActionListener((ActionEvent event) -> {
 			setLineEncoding();
 		});
-		
+
 		JMenuItem mntmNewMenuItem_1 = new JMenuItem("Help");
 		mntmNewMenuItem.setMnemonic(KeyEvent.VK_E);
 		mntmNewMenuItem.setToolTipText("Set theme of Text Editor");
@@ -302,24 +346,71 @@ public class NotePad {
 			EventQueue.invokeLater(new Runnable() {
 				@Override
 				public void run() {
-					JOptionPane.showMessageDialog(frame, "No Help For You:", "Alert", JOptionPane.ERROR_MESSAGE);  
+					JOptionPane.showMessageDialog(frame, "No Help For You:", "Alert", JOptionPane.ERROR_MESSAGE);
 				}
 			});
 
 		});
 		mnNewMenu.add(mntmNewMenuItem_1);
-		 
-		menuBar.add(Box.createHorizontalGlue()); 
+
+		menuBar.add(Box.createHorizontalGlue());
 		menuBar.add(lblNewLabel_2);
-		 
-		setTreeWD("display");		
+
+		setTreeWD("display");
 		listener = new MyKeyListener();
-		frame.setFocusable(false);   
+		frame.setFocusable(false);
 	}
+
+	public void search(DataNode dn, JTextField textField2) throws BadLocationException {
+		 
+		ws = new WordSearch(dn, textField);
+		ws.setFirst();
+	}
+
+//	protected void search(DataNode dn, JTextField jtfSearch, WordHighLighter wh) {
+//
+//		ArrayList<Integer> location = new ArrayList<Integer>();
+//		Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.cyan);
+//
+//		String word = jtfSearch.getText().trim();
+//		String document = dn.getJta().getText();
+//
+//		int i = document.indexOf(word);
+//		while (i >= 0) {
+//			location.add(i);
+//			i = document.indexOf(word, i + 1);
+//		}
+//		
+//		wh = new WordHighLighter(word,  dn, location);
+//		
+////		System.out.println(location);
+////		int j = dn.getJta().getCaretPosition();
+////		for (int k = 0; k < location.size(); k++) {
+////			if (location.get(k) >= dn.getJta().getCaretPosition()) {
+////				try {
+////					dn.getJta().getHighlighter().addHighlight(location.get(k), location.get(k) + word.length(),
+////							painter);
+////				} catch (BadLocationException e) {
+////					e.printStackTrace();
+////				}
+////				return;
+////			}
+////		}
+//
+//		// for (int j = 0; j < location.size(); j++) {
+//		// try {
+//		// dn.getJta().getHighlighter().addHighlight(location.get(j), location.get(j) +
+//		// word.length(), painter);
+//		// } catch (BadLocationException ble) {
+//		// System.out.println(ble);
+//		// }
+//		// }
+//
+//	}
 	
+
 	/**
-	 * Monitors change in active tab
-	 * @param changeEvent
+	 * Monitors change in active tab 
 	 */
 	private void changeEventTab(ChangeEvent changeEvent) {
 		JTabbedPane sourceTabbedPane = (JTabbedPane) changeEvent.getSource();
@@ -328,17 +419,17 @@ public class NotePad {
 			activeTab = "";
 		} else {
 			String temp = activeTab;
-			activeTab = sourceTabbedPane.getTitleAt(index);    
+			activeTab = sourceTabbedPane.getTitleAt(index);
 			for (String key : mapper.keySet()) {
-				if(key.contentEquals(temp)) {
+				if (key.contentEquals(temp)) {
 					DataNode dn = mapper.get(key);
-					dn.getJta().removeKeyListener(listener); 
-				}else if(key.contentEquals(activeTab)) {
+					dn.getJta().removeKeyListener(listener);
+				} else if (key.contentEquals(activeTab)) {
 					DataNode dn = mapper.get(key);
-					dn.getJta().addKeyListener(listener);  
+					dn.getJta().addKeyListener(listener);
 				}
-			} 					
-		}		
+			}
+		}
 	}
 
 	/**
@@ -347,7 +438,7 @@ public class NotePad {
 	private void newFile() {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
-			public void run() { 
+			public void run() {
 				File fileToSave = null;
 				boolean write = false;
 				int reply = JOptionPane.showConfirmDialog(frame, "Save to working directory:", "Save",
@@ -361,9 +452,9 @@ public class NotePad {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-						write = true; 
-					} 
-				} else if (reply == JOptionPane.NO_OPTION){
+						write = true;
+					}
+				} else if (reply == JOptionPane.NO_OPTION) {
 					JFileChooser fileChooser = new JFileChooser();
 					fileChooser.setDialogTitle("Specify save location.");
 					int userSelection = fileChooser.showSaveDialog(frame);
@@ -371,26 +462,25 @@ public class NotePad {
 						fileToSave = fileChooser.getSelectedFile();
 						try {
 							fileToSave.createNewFile();
-							write = true; 
-						} catch (IOException e) { 
+							write = true;
+						} catch (IOException e) {
 							e.printStackTrace();
 						}
-						
-					}  		 
-				} 
-				
-				if((reply == JOptionPane.NO_OPTION || reply == JOptionPane.YES_OPTION) && write == true) { 
-					filePath = fileToSave.toString(); 
-					Path p = Paths.get(filePath); 
+
+					}
+				}
+
+				if ((reply == JOptionPane.NO_OPTION || reply == JOptionPane.YES_OPTION) && write == true) {
+					filePath = fileToSave.toString();
+					Path p = Paths.get(filePath);
 					fileName = p.getFileName().toString();
 					addTab(tabbedPane);
 					setTreeWD("display");
 				}
 			}
-		});  
+		});
 	}
-	
-	
+
 	/**
 	 * Sets the colour and size of font
 	 */
@@ -398,54 +488,52 @@ public class NotePad {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				JPanel myPanel = new JPanel(); 
-				myPanel.setLayout(new MigLayout("", "[grow][grow]", "[grow][grow][grow][grow][grow]")); 
+				JPanel myPanel = new JPanel();
+				myPanel.setLayout(new MigLayout("", "[grow][grow]", "[grow][grow][grow][grow][grow]"));
 				JLabel lblSetHteFont = new JLabel("Font Size:");
-				myPanel.add(lblSetHteFont, "cell 0 1,alignx trailing"); 
-				
-				Integer[] ITEMS = { 9, 10, 11, 12, 14, 16, 18, 20, 24, 32 }; 
-				JComboBox <Integer> comboBox = new JComboBox<Integer>(ITEMS);	
+				myPanel.add(lblSetHteFont, "cell 0 1,alignx trailing");
+
+				Integer[] ITEMS = { 9, 10, 11, 12, 14, 16, 18, 20, 24, 32 };
+				JComboBox<Integer> comboBox = new JComboBox<Integer>(ITEMS);
 				comboBox.getModel().setSelectedItem(Integer.parseInt(setOrGetPref("FontSize", null, "get")));
 				myPanel.add(comboBox, "cell 1 1,growx");
-				
-				String fonts[] = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();					
-				JLabel lblSetFontType = new JLabel("Font Type:");				
-				myPanel.add(lblSetFontType, "cell 0 2,alignx trailing");								
-				JComboBox <String> comboBox_3 = new JComboBox<String>(fonts);
-				comboBox_3.getModel().setSelectedItem(setOrGetPref("FontType", null, "get")); 
+
+				String fonts[] = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+				JLabel lblSetFontType = new JLabel("Font Type:");
+				myPanel.add(lblSetFontType, "cell 0 2,alignx trailing");
+				JComboBox<String> comboBox_3 = new JComboBox<String>(fonts);
+				comboBox_3.getModel().setSelectedItem(setOrGetPref("FontType", null, "get"));
 				myPanel.add(comboBox_3, "cell 1 2,growx");
-				 
-				String[] colours  = { "Black", "Blue", "Gray", "Green", "Orange", "Red", "White", "Yellow", "Pink" };
+
+				String[] colours = { "Black", "Blue", "Gray", "Green", "Orange", "Red", "White", "Yellow", "Pink" };
 				JLabel lblSetFourgroun = new JLabel("Foreground Colour:");
-				myPanel.add(lblSetFourgroun, "cell 0 3,alignx trailing");				 			
-				JComboBox <String> comboBox_1 = new JComboBox<String>(colours);
+				myPanel.add(lblSetFourgroun, "cell 0 3,alignx trailing");
+				JComboBox<String> comboBox_1 = new JComboBox<String>(colours);
 				comboBox_1.getModel().setSelectedItem(setOrGetPref("FourgColour", null, "get"));
 				myPanel.add(comboBox_1, "cell 1 3,growx");
-				
-				JLabel lblSetBackgroundColour = new JLabel("Background Colour:");				
-				myPanel.add(lblSetBackgroundColour, "cell 0 4,alignx trailing");								
-				JComboBox <String> comboBox_2 = new JComboBox<String>(colours);
+
+				JLabel lblSetBackgroundColour = new JLabel("Background Colour:");
+				myPanel.add(lblSetBackgroundColour, "cell 0 4,alignx trailing");
+				JComboBox<String> comboBox_2 = new JComboBox<String>(colours);
 				comboBox_2.getModel().setSelectedItem(setOrGetPref("BackColour", null, "get"));
 				myPanel.add(comboBox_2, "cell 1 4,growx");
-				
-				
-				int result = JOptionPane.showConfirmDialog(frame, myPanel, "Set Font",
-						JOptionPane.OK_CANCEL_OPTION);
-				if (result == JOptionPane.OK_OPTION) {				
-					Integer temp = (Integer)comboBox.getSelectedItem();				
-					setOrGetPref("FontSize",  Integer.toString(temp), "set");
-					setOrGetPref("FourgColour", (String)comboBox_1.getSelectedItem(), "set");
-					setOrGetPref("BackColour", (String)comboBox_2.getSelectedItem(), "set");  
-					setOrGetPref("FontType", (String)comboBox_3.getSelectedItem(), "set" );
-					for(DataNode dn:mapper.values() ) { 
-						dn.changeFont(Integer.toString(temp), (String)comboBox_1.getSelectedItem(), (String)comboBox_2.getSelectedItem(), (String)comboBox_3.getSelectedItem());
+
+				int result = JOptionPane.showConfirmDialog(frame, myPanel, "Set Font", JOptionPane.OK_CANCEL_OPTION);
+				if (result == JOptionPane.OK_OPTION) {
+					Integer temp = (Integer) comboBox.getSelectedItem();
+					setOrGetPref("FontSize", Integer.toString(temp), "set");
+					setOrGetPref("FourgColour", (String) comboBox_1.getSelectedItem(), "set");
+					setOrGetPref("BackColour", (String) comboBox_2.getSelectedItem(), "set");
+					setOrGetPref("FontType", (String) comboBox_3.getSelectedItem(), "set");
+					for (DataNode dn : mapper.values()) {
+						dn.changeFont(Integer.toString(temp), (String) comboBox_1.getSelectedItem(),
+								(String) comboBox_2.getSelectedItem(), (String) comboBox_3.getSelectedItem());
 					}
 				}
 			}
 		});
 	}
-	
- 
+
 	/**
 	 * Sets the theme of the window
 	 */
@@ -454,9 +542,10 @@ public class NotePad {
 			@Override
 			public void run() {
 				String[] values = { "Aluminium", "Smart", "Noire", "Acryl", "Aero", "Fast", "HiFi", "Texture", "McWin",
-						"Mint", "Bernstein", "Luna"};
+						"Mint", "Bernstein", "Luna" };
 				Object selected = JOptionPane.showInputDialog(frame, "Choose Your  Theme", "Selection",
-						JOptionPane.DEFAULT_OPTION, null, values, setOrGetPref("Theme", null, "get").substring(setOrGetPref("Theme", null, "get").lastIndexOf(".") + 1) );
+						JOptionPane.DEFAULT_OPTION, null, values, setOrGetPref("Theme", null, "get")
+								.substring(setOrGetPref("Theme", null, "get").lastIndexOf(".") + 1));
 				if (selected != null) {
 					setOrGetPref("Theme", selected.toString().toLowerCase() + "." + selected.toString(), "set");
 					try {
@@ -473,7 +562,7 @@ public class NotePad {
 			}
 		});
 	}
-	
+
 	/**
 	 * Sets line encoding of written file
 	 */
@@ -483,21 +572,20 @@ public class NotePad {
 			public void run() {
 				if (JOptionPane.showConfirmDialog(frame, "Use Linux Line Encoding", "Choose Linux",
 						JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-					setOrGetPref("LineEncoding",  "Yes", "set");
+					setOrGetPref("LineEncoding", "Yes", "set");
 				}
 			}
 		});
 	}
-	
+
 	/**
-	 * Deletes file from memory
-	 * @param tabbedPane
+	 * Deletes file from memory 
 	 */
 	protected void deleteFile(JTabbedPane tabbedPane) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				if (fileName != null && !fileName.isEmpty()) { 
+				if (fileName != null && !fileName.isEmpty()) {
 					File file = new File(filePath);
 					if (!file.isDirectory()) {
 						if (fileName != null && !fileName.isEmpty()) {
@@ -525,19 +613,17 @@ public class NotePad {
 							}
 						} else
 							JOptionPane.showMessageDialog(frame, "No File to Delete!");
-						
+
 					} else
 						JOptionPane.showMessageDialog(frame, "No File to Delete!");
-				}else
+				} else
 					JOptionPane.showMessageDialog(frame, "No File to Delete!");
 			}
 		});
 	}
 
 	/**
-	 * Builds a JTree
-	 * @param dir
-	 * @return DefaultMutableTreeNode
+	 * Builds a JTree 
 	 */
 	private static DefaultMutableTreeNode addNodes(File dir) {
 		DefaultMutableTreeNode node = new DefaultMutableTreeNode(dir);
@@ -552,34 +638,30 @@ public class NotePad {
 	}
 
 	/**
-	 * Reads text form a JTextArea and writes to specified file. 
-	 * @param filePath
-	 * @param jta
+	 * Reads text form a JTextArea and writes to specified file.
 	 */
-	private void saveFile(DataNode dataNode) {  
+	private void saveFile(DataNode dataNode) {
 		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(dataNode.getLocation()))) {
-			if(setOrGetPref("LineEncoding", null, "get").contentEquals("Yes")) {
-				bw.write(dataNode.getJta().getText()); 
-			}else
+			if (setOrGetPref("LineEncoding", null, "get").contentEquals("Yes")) {
+				bw.write(dataNode.getJta().getText());
+			} else
 				dataNode.getJta().write(bw);
-			Path p = Paths.get(dataNode.getLocation()); 
+			Path p = Paths.get(dataNode.getLocation());
 			displayInfo("Saved: " + p.getFileName().toString());
+			bw.flush();
 		} catch (Exception e) {
 			System.err.println("Error: " + e.getMessage());
 		}
+
 	}
 
 	/**
-	 * Checks for user settings, returns setting if present 
-	 * @param id
-	 * @param value
-	 * @param SetGet
-	 * @return
+	 * Checks for user settings, returns setting if present
 	 */
 	private String setOrGetPref(String id, String value, String SetGet) {
 		if (SetGet.equals("get")) {
 			String temp = null;
-			switch(id) {			
+			switch (id) {
 			case "Root":
 				temp = prefs.get(id, ".");
 				break;
@@ -601,9 +683,9 @@ public class NotePad {
 			case "LineEncoding":
 				temp = prefs.get(id, "No");
 				break;
-			 default:
-				 break;
-			}				
+			default:
+				break;
+			}
 			return temp;
 		} else
 			prefs.put(id, value);
@@ -611,31 +693,29 @@ public class NotePad {
 	}
 
 	/**
-	 * Adds a new tab to the JTabPane, with a close button. 
-	 * @param tabbedPane
-	 * @throws InterruptedException
-	 * @throws InvocationTargetException
+	 * Adds a new tab to the JTabPane, with a close button.
 	 */
 	private void addTab(JTabbedPane tabbedPane) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				
+
 				for (String name : mapper.keySet()) {
 					if (name.contentEquals(fileName)) {
 						for (int i = 0; i < tabbedPane.getTabCount(); i++) {
 							if (tabbedPane.getTitleAt(i).equals(fileName))
-								tabbedPane.setSelectedIndex(i);											
-						} 					
+								tabbedPane.setSelectedIndex(i);
+						}
 						return;
 					}
 				}
 				String line;
 				DataNode dn = new DataNode(filePath, setOrGetPref("FontSize", null, "get"),
 						setOrGetPref("FourgColour", null, "get"), setOrGetPref("BackColour", null, "get"),
-						setOrGetPref("FontType", null, "get") );
+						setOrGetPref("FontType", null, "get"));
 				tabbedPane.addTab(fileName, null, dn.getJs());
-				tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, new ButtonTabComponent(tabbedPane, mapper, fileName));
+				tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1,
+						new ButtonTabComponent(tabbedPane, mapper, fileName));
 				tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
 				try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
 					while ((line = br.readLine()) != null) {
@@ -644,25 +724,23 @@ public class NotePad {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-				dn.getJta().addKeyListener(listener);  
-				
+				dn.getJta().addKeyListener(listener);
+
 				dn.getJta().setCaretPosition(0);
-				mapper.put(fileName, dn); 
+				mapper.put(fileName, dn);
 			}
 		});
 	}
-	
-	
-	/**Displays info about file saved
-	 * @param info
+
+	/**
+	 * Displays info about file saved
 	 */
 	private void displayInfo(String info) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
 				Integer waitSeconds = 3;
-				//lblNewLabel_2.setText(info);
-				lblNewLabel_2.setIcon(new ImageIcon(NotePad.class.getResource("/resources/ic_penguin.gif"))); 
+				lblNewLabel_2.setIcon(new ImageIcon(NotePad.class.getResource("/resources/ic_penguin.gif")));
 				Timer timer = new Timer(waitSeconds * 1000, new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -697,7 +775,7 @@ public class NotePad {
 					tree = new JTree(addNodes(new File(setOrGetPref("Root", null, "get"))));
 
 				tree.setRootVisible(true);
-				tree.setShowsRootHandles(false); 
+				tree.setShowsRootHandles(false);
 				tree.setToggleClickCount(10);
 				tree.setFocusable(false);
 				tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -705,33 +783,33 @@ public class NotePad {
 				scrollPane_1.setViewportView(tree);
 				tree.addTreeSelectionListener(new TreeSelectionListener() {
 					@Override
-					public void valueChanged(TreeSelectionEvent e) { 
+					public void valueChanged(TreeSelectionEvent e) {
 						DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree
 								.getLastSelectedPathComponent();
 						Object userObject = selectedNode.getUserObject();
 						filePath = userObject.toString();
-						Path p = Paths.get(filePath); 
+						Path p = Paths.get(filePath);
 						fileName = p.getFileName().toString();
 					}
 				});
-				
+
 				MouseListener ml = new MouseAdapter() {
-				    public void mousePressed(MouseEvent e) {
-				    	int selRow = tree.getRowForLocation(e.getX(), e.getY());
-				    	if(selRow != -1) {
-				            if(e.getClickCount() == 2) {
-				            	if (filePath != null && filePath != setOrGetPref("Root", null, "get")) {
+					public void mousePressed(MouseEvent e) {
+						int selRow = tree.getRowForLocation(e.getX(), e.getY());
+						if (selRow != -1) {
+							if (e.getClickCount() == 2) {
+								if (filePath != null && filePath != setOrGetPref("Root", null, "get")) {
 									addTab(tabbedPane);
-								} 
-				            }
-				    	}
-				    }
+								}
+							}
+						}
+					}
 				};
 				tree.addMouseListener(ml);
 			}
 		});
 	}
-	
+
 	/**
 	 * Helper class KeyListener
 	 */
@@ -742,7 +820,7 @@ public class NotePad {
 		boolean f = false;
 
 		@Override
-		public void keyTyped(KeyEvent e) { 
+		public void keyTyped(KeyEvent e) {
 		}
 
 		@Override
@@ -768,9 +846,8 @@ public class NotePad {
 
 				} else
 					JOptionPane.showMessageDialog(frame, "No File to Save!");
-			}
-			else if(ctl == true && f == true) { 
-				state = !state;				
+			} else if (ctl == true && f == true) {
+				state = !state;
 				panel_6.setVisible(state);
 			}
 
@@ -784,15 +861,14 @@ public class NotePad {
 			case KeyEvent.VK_F:
 				f = false;
 				break;
-			 default:
+			default:
 				s = false;
 				ctl = false;
 				f = false;
 				break;
 			}
 		}
-	} 
- 
+	}
 
 	/**
 	 * Helper class for JTree Creation
@@ -811,5 +887,5 @@ public class NotePad {
 			}
 			return super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
 		}
-	}	
+	}
 }
