@@ -365,7 +365,53 @@ public class NotePad {
 		 
 		ws = new WordSearch(dn, textField);
 		ws.setFirst();
+<<<<<<< HEAD
 	}	
+=======
+	}
+
+//	protected void search(DataNode dn, JTextField jtfSearch, WordHighLighter wh) {
+//
+//		ArrayList<Integer> location = new ArrayList<Integer>();
+//		Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.cyan);
+//
+//		String word = jtfSearch.getText().trim();
+//		String document = dn.getJta().getText();
+//
+//		int i = document.indexOf(word);
+//		while (i >= 0) {
+//			location.add(i);
+//			i = document.indexOf(word, i + 1);
+//		}
+//		
+//		wh = new WordHighLighter(word,  dn, location);
+//		
+////		System.out.println(location);
+////		int j = dn.getJta().getCaretPosition();
+////		for (int k = 0; k < location.size(); k++) {
+////			if (location.get(k) >= dn.getJta().getCaretPosition()) {
+////				try {
+////					dn.getJta().getHighlighter().addHighlight(location.get(k), location.get(k) + word.length(),
+////							painter);
+////				} catch (BadLocationException e) {
+////					e.printStackTrace();
+////				}
+////				return;
+////			}
+////		}
+//
+//		// for (int j = 0; j < location.size(); j++) {
+//		// try {
+//		// dn.getJta().getHighlighter().addHighlight(location.get(j), location.get(j) +
+//		// word.length(), painter);
+//		// } catch (BadLocationException ble) {
+//		// System.out.println(ble);
+//		// }
+//		// }
+//
+//	}
+	
+>>>>>>> 202c33671cc04016b7a1bc62f2e017e6b09926fd
 
 	/**
 	 * Monitors change in active tab 
@@ -424,6 +470,10 @@ public class NotePad {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
+<<<<<<< HEAD
+=======
+
+>>>>>>> 202c33671cc04016b7a1bc62f2e017e6b09926fd
 					}
 				}
 
