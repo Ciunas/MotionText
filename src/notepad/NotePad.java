@@ -67,8 +67,7 @@ public class NotePad {
 
 	HashMap<String, DataNode> mapper = new HashMap<String, DataNode>();
 	private static Preferences prefs;
-	private String filePath;
-	private String fileName;
+	private Path filePath; 
 	private String activeTab;
 	private JScrollPane scrollPane_1;
 	private JLabel lblNewLabel_2;
@@ -148,7 +147,7 @@ public class NotePad {
 		panel_6 = new JPanel();
 		panel_6.setVisible(state = false);
 		panel_2.add(panel_6, BorderLayout.SOUTH);
-		panel_6.setLayout(new MigLayout("", "[grow][][][]", "[15px]"));
+		panel_6.setLayout(new MigLayout("", "[grow][][][][]", "[15px]"));
 
 		textField = new JTextField();
 		panel_6.add(textField, "cell 0 0,growx");
@@ -165,7 +164,6 @@ public class NotePad {
 							try {
 								search(dn, textField);
 							} catch (BadLocationException e) {
-								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
 						}
@@ -179,14 +177,13 @@ public class NotePad {
 		lblFind.setIcon(new ImageIcon(NotePad.class.getResource("/resources/up.png")));
 		lblFind.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-					try {
-						ws.backwards();
-					} catch (BadLocationException e) { 
-						e.printStackTrace();
-					}
+				try {
+					ws.backwards();
+				} catch (BadLocationException e) {
+					e.printStackTrace();
+				}
 			}
 		});
-		panel_6.add(lblFind, "cell 2 0,alignx trailing");
 
 		JButton btnFind = new JButton("");
 		btnFind.setIcon(new ImageIcon(NotePad.class.getResource("/resources/down.png")));
@@ -194,13 +191,14 @@ public class NotePad {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
 					ws.forward();
-				} catch (BadLocationException e) { 
+				} catch (BadLocationException e) {
 					e.printStackTrace();
 				}
 			}
 		});
 
-		panel_6.add(btnFind, "cell 3 0");
+		panel_6.add(btnFind, "cell 2 0");
+		panel_6.add(lblFind, "cell 3 0,alignx trailing");
 
 		ChangeListener changeListener = new ChangeListener() {
 			public void stateChanged(ChangeEvent changeEvent) {
@@ -259,17 +257,7 @@ public class NotePad {
 		btnNewButton_1.setToolTipText("Open highlighted file");
 		btnNewButton_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				if (filePath != null && filePath != setOrGetPref("Root", null, "get")) {
-					addTab(tabbedPane);
-				} else {
-					EventQueue.invokeLater(new Runnable() {
-						@Override
-						public void run() {
-							JOptionPane.showMessageDialog(frame, "No File Highlighted!", "Hay",
-									JOptionPane.ERROR_MESSAGE);
-						}
-					});
-				}
+				addTab(tabbedPane);
 			}
 		});
 
@@ -287,16 +275,7 @@ public class NotePad {
 		btnNewFile.setToolTipText("Save foreground tab");
 		btnNewFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (activeTab != null && !activeTab.isEmpty()) {
-					saveFile(mapper.get(activeTab));
-				} else {
-					EventQueue.invokeLater(new Runnable() {
-						@Override
-						public void run() {
-							JOptionPane.showMessageDialog(frame, "No File to Save!", "Hay", JOptionPane.ERROR_MESSAGE);
-						}
-					});
-				}
+				saveFile(mapper.get(activeTab));
 			}
 		});
 
@@ -361,57 +340,10 @@ public class NotePad {
 		frame.setFocusable(false);
 	}
 
-	public void search(DataNode dn, JTextField textField2) throws BadLocationException {
-		 
+	public void search(DataNode dn, JTextField textField2) throws BadLocationException {		 
 		ws = new WordSearch(dn, textField);
 		ws.setFirst();
-<<<<<<< HEAD
 	}	
-=======
-	}
-
-//	protected void search(DataNode dn, JTextField jtfSearch, WordHighLighter wh) {
-//
-//		ArrayList<Integer> location = new ArrayList<Integer>();
-//		Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.cyan);
-//
-//		String word = jtfSearch.getText().trim();
-//		String document = dn.getJta().getText();
-//
-//		int i = document.indexOf(word);
-//		while (i >= 0) {
-//			location.add(i);
-//			i = document.indexOf(word, i + 1);
-//		}
-//		
-//		wh = new WordHighLighter(word,  dn, location);
-//		
-////		System.out.println(location);
-////		int j = dn.getJta().getCaretPosition();
-////		for (int k = 0; k < location.size(); k++) {
-////			if (location.get(k) >= dn.getJta().getCaretPosition()) {
-////				try {
-////					dn.getJta().getHighlighter().addHighlight(location.get(k), location.get(k) + word.length(),
-////							painter);
-////				} catch (BadLocationException e) {
-////					e.printStackTrace();
-////				}
-////				return;
-////			}
-////		}
-//
-//		// for (int j = 0; j < location.size(); j++) {
-//		// try {
-//		// dn.getJta().getHighlighter().addHighlight(location.get(j), location.get(j) +
-//		// word.length(), painter);
-//		// } catch (BadLocationException ble) {
-//		// System.out.println(ble);
-//		// }
-//		// }
-//
-//	}
-	
->>>>>>> 202c33671cc04016b7a1bc62f2e017e6b09926fd
 
 	/**
 	 * Monitors change in active tab 
@@ -444,43 +376,18 @@ public class NotePad {
 			@Override
 			public void run() {
 				File fileToSave = null;
-				boolean write = false;
-				int reply = JOptionPane.showConfirmDialog(frame, "Save to working directory:", "Save",
-						JOptionPane.YES_NO_OPTION);
-				if (reply == JOptionPane.YES_OPTION) {
-					String name = JOptionPane.showInputDialog(frame, "File Name:");
-					if (name != null && !name.isEmpty()) {
-						fileToSave = new File(setOrGetPref("Root", null, "get") + "/" + name);
-						try {
-							fileToSave.createNewFile();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-						write = true;
+				JFileChooser fileChooser = new JFileChooser(setOrGetPref("Root", null, "get"));
+				fileChooser.setDialogTitle("Specify save location.");
+				int userSelection = fileChooser.showSaveDialog(frame);
+				if (userSelection == JFileChooser.APPROVE_OPTION) {
+					fileToSave = fileChooser.getSelectedFile();
+					try {
+						fileToSave.createNewFile();
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
-				} else if (reply == JOptionPane.NO_OPTION) {
-					JFileChooser fileChooser = new JFileChooser();
-					fileChooser.setDialogTitle("Specify save location.");
-					int userSelection = fileChooser.showSaveDialog(frame);
-					if (userSelection == JFileChooser.APPROVE_OPTION) {
-						fileToSave = fileChooser.getSelectedFile();
-						try {
-							fileToSave.createNewFile();
-							write = true;
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-<<<<<<< HEAD
-=======
-
->>>>>>> 202c33671cc04016b7a1bc62f2e017e6b09926fd
-					}
-				}
-
-				if ((reply == JOptionPane.NO_OPTION || reply == JOptionPane.YES_OPTION) && write == true) {
-					filePath = fileToSave.toString();
-					Path p = Paths.get(filePath);
-					fileName = p.getFileName().toString();
+					filePath = Paths.get(fileToSave.toString());
+					//fileName = filePath.getFileName().toString();
 					addTab(tabbedPane);
 					setTreeWD("display");
 				}
@@ -586,43 +493,37 @@ public class NotePad {
 	}
 
 	/**
-	 * Deletes file from memory 
+	 * Deletes file from memory
 	 */
 	protected void deleteFile(JTabbedPane tabbedPane) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				if (fileName != null && !fileName.isEmpty()) {
-					File file = new File(filePath);
-					if (!file.isDirectory()) {
-						if (fileName != null && !fileName.isEmpty()) {
-							int reply = JOptionPane.showConfirmDialog(frame, "Delete Following File: " + fileName,
-									"Delete", JOptionPane.YES_NO_OPTION);
-							if (reply == JOptionPane.YES_OPTION) {
-								if (file.delete()) {
-									String temp = null;
-									for (String key : mapper.keySet()) {
-										if (fileName.contentEquals(key)) {
-											for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-												if (tabbedPane.getTitleAt(i).equals(fileName))
-													tabbedPane.remove(i);
-												temp = key;
-											}
-										}
+				if (!Files.isDirectory(filePath)) {
+					File file = new File(filePath.toString());
+					int reply = JOptionPane.showConfirmDialog(frame,
+							"Delete Following File: " + filePath.getFileName().toString(), "Delete",
+							JOptionPane.YES_NO_OPTION);
+					if (reply == JOptionPane.YES_OPTION) {
+						if (file.delete()) {
+							String temp = null;
+							for (String key : mapper.keySet()) {
+								if (filePath.getFileName().toString().contentEquals(key)) {
+									for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+										if (tabbedPane.getTitleAt(i).equals(filePath.getFileName().toString()))
+											tabbedPane.remove(i);
+										temp = key;
 									}
-									if (temp != null && !temp.isEmpty()) {
-										mapper.remove(temp);
-										filePath = setOrGetPref("Root", null, "get");
-									}
-									setTreeWD("display");
-								} else
-									JOptionPane.showMessageDialog(frame, "Error file not Deleted:");
+								}
 							}
+							if (temp != null && !temp.isEmpty()) {
+								mapper.remove(temp);
+								filePath = Paths.get(setOrGetPref("Root", null, "get"));
+							}
+							setTreeWD("display");
 						} else
-							JOptionPane.showMessageDialog(frame, "No File to Delete!");
-
-					} else
-						JOptionPane.showMessageDialog(frame, "No File to Delete!");
+							JOptionPane.showMessageDialog(frame, "Error file not Deleted:");
+					}
 				} else
 					JOptionPane.showMessageDialog(frame, "No File to Delete!");
 			}
@@ -648,18 +549,20 @@ public class NotePad {
 	 * Reads text form a JTextArea and writes to specified file.
 	 */
 	private void saveFile(DataNode dataNode) {
-		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(dataNode.getLocation()))) {
-			if (setOrGetPref("LineEncoding", null, "get").contentEquals("Yes")) {
-				bw.write(dataNode.getJta().getText());
-			} else
-				dataNode.getJta().write(bw);
-			Path p = Paths.get(dataNode.getLocation());
-			displayInfo("Saved: " + p.getFileName().toString());
-			bw.flush();
-		} catch (Exception e) {
-			System.err.println("Error: " + e.getMessage());
-		}
+		if (activeTab != null && !activeTab.isEmpty()) {
+			try (BufferedWriter bw = Files.newBufferedWriter(dataNode.getLocation())) {
+				if (setOrGetPref("LineEncoding", null, "get").contentEquals("Yes")) {
+					bw.write(dataNode.getJta().getText());
+				} else
+					dataNode.getJta().write(bw); 
+				displayInfo("Saved: " + dataNode.getLocation().getFileName().toString()); 
+			} catch (Exception e) {
+				System.err.println("Error: " + e.getMessage());
+			}
 
+		} else {
+			JOptionPane.showMessageDialog(frame, "No File to Save!", "Hay", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 
 	/**
@@ -706,35 +609,37 @@ public class NotePad {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-
-				for (String name : mapper.keySet()) {
-					if (name.contentEquals(fileName)) {
-						for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-							if (tabbedPane.getTitleAt(i).equals(fileName))
-								tabbedPane.setSelectedIndex(i);
+				if (filePath != null && !Files.isDirectory(filePath)) {
+					for (String name : mapper.keySet()) {
+						if (name.contentEquals(filePath.getFileName().toString())) {
+							for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+								if (tabbedPane.getTitleAt(i).equals(filePath.getFileName().toString()))
+									tabbedPane.setSelectedIndex(i);
+							}
+							return;
 						}
-						return;
 					}
-				}
-				String line;
-				DataNode dn = new DataNode(filePath, setOrGetPref("FontSize", null, "get"),
-						setOrGetPref("FourgColour", null, "get"), setOrGetPref("BackColour", null, "get"),
-						setOrGetPref("FontType", null, "get"));
-				tabbedPane.addTab(fileName, null, dn.getJs());
-				tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1,
-						new ButtonTabComponent(tabbedPane, mapper, fileName));
-				tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
-				try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-					while ((line = br.readLine()) != null) {
-						dn.getJta().append(line + "\n");
+					String line;
+					DataNode dn = new DataNode(filePath, setOrGetPref("FontSize", null, "get"),
+							setOrGetPref("FourgColour", null, "get"), setOrGetPref("BackColour", null, "get"),
+							setOrGetPref("FontType", null, "get"));
+					tabbedPane.addTab(filePath.getFileName().toString(), null, dn.getJs());
+					tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1,
+							new ButtonTabComponent(tabbedPane, mapper, filePath.getFileName().toString()));
+					tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
+					try (BufferedReader br = new BufferedReader(new FileReader(filePath.toString()))) {
+						while ((line = br.readLine()) != null) {
+							dn.getJta().append(line + "\n");
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
-				} catch (IOException e) {
-					e.printStackTrace();
+					dn.getJta().addKeyListener(listener);
+					dn.getJta().setCaretPosition(0);
+					mapper.put(filePath.getFileName().toString(), dn);
+				} else {
+					JOptionPane.showMessageDialog(frame, "No File Highlighted!", "Hay", JOptionPane.ERROR_MESSAGE);
 				}
-				dn.getJta().addKeyListener(listener);
-
-				dn.getJta().setCaretPosition(0);
-				mapper.put(fileName, dn);
 			}
 		});
 	}
@@ -793,10 +698,9 @@ public class NotePad {
 					public void valueChanged(TreeSelectionEvent e) {
 						DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree
 								.getLastSelectedPathComponent();
-						Object userObject = selectedNode.getUserObject();
-						filePath = userObject.toString();
-						Path p = Paths.get(filePath);
-						fileName = p.getFileName().toString();
+						Object userObject = selectedNode.getUserObject(); 
+						filePath = Paths.get(userObject.toString()); 
+						//fileName = filePath.getFileName().toString();
 					}
 				});
 
@@ -805,7 +709,7 @@ public class NotePad {
 						int selRow = tree.getRowForLocation(e.getX(), e.getY());
 						if (selRow != -1) {
 							if (e.getClickCount() == 2) {
-								if (filePath != null && filePath != setOrGetPref("Root", null, "get")) {
+								if (filePath != null && !Files.isDirectory(filePath)) {
 									addTab(tabbedPane);
 								}
 							}
@@ -847,12 +751,9 @@ public class NotePad {
 
 		@Override
 		public void keyReleased(KeyEvent e) {
+			
 			if (ctl == true && s == true) {
-				if (activeTab != null && !activeTab.isEmpty()) {
-					saveFile(mapper.get(activeTab));
-
-				} else
-					JOptionPane.showMessageDialog(frame, "No File to Save!");
+				saveFile(mapper.get(activeTab)); 
 			} else if (ctl == true && f == true) {
 				state = !state;
 				panel_6.setVisible(state);

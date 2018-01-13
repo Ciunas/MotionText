@@ -3,6 +3,7 @@ package notepad;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Insets;
+import java.nio.file.Path;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea; 
@@ -11,9 +12,9 @@ public class DataNode {
 
 	JScrollPane js = new JScrollPane(); 
 	JTextArea jta = new JTextArea(); 
-	String location;
+	Path location;
 	
-	public DataNode(String location, String fontSize, String fourgColour, String backColour, String fontName){
+	public DataNode(Path location, String fontSize, String fourgColour, String backColour, String fontName){
 		this.location = location;  
 		jta.setForeground(setColour(fourgColour));
 		jta.setBackground(setColour(backColour));
@@ -46,11 +47,11 @@ public class DataNode {
 		return col[i];
 	} 
 
-	public String getLocation() {
+	public Path getLocation() {
 		return location;
 	}
 
-	public void setLocation(String location) {
+	public void setLocation(Path location) {
 		this.location = location;
 	}
 

@@ -10,13 +10,14 @@ import javax.swing.text.Highlighter;
 
 public class WordSearch {
 	
-	Object highlightTag;
 	ArrayList<Integer> location = new ArrayList<Integer>();
-	Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.cyan);
+	Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.red);
+	Object highlightTag;
 	DataNode dn;
 	String word;
 	String document;
-	int position = 0;
+	int position;
+	
 
 	public WordSearch(DataNode dn, JTextField word) { 
 		this.dn = dn;
@@ -36,8 +37,7 @@ public class WordSearch {
 			if (location.get(j) >= dn.getJta().getCaretPosition()) {
 				try {
 					highlightTag = dn.getJta().getHighlighter().addHighlight(location.get(j), location.get(j) + word.length(),
-							painter);
-					
+							painter);					
 				} catch (BadLocationException e) {
 					e.printStackTrace();
 				}
@@ -47,15 +47,19 @@ public class WordSearch {
 		}
 	}
 	
-	public void forward() throws BadLocationException {
-		dn.getJta().getHighlighter().removeHighlight(highlightTag);
-		highlightTag = dn.getJta().getHighlighter().addHighlight(location.get(++position), location.get(position) + word.length(),
-				painter);
+	public void forward() throws BadLocationException { 
+		if (position < location.size()-1) {
+			dn.getJta().getHighlighter().removeHighlight(highlightTag);
+			highlightTag = dn.getJta().getHighlighter().addHighlight(location.get(++position),
+					location.get(position) + word.length(), painter);
+		}
 	}
 
 	public void backwards() throws BadLocationException {
-		dn.getJta().getHighlighter().removeHighlight(highlightTag);
-		highlightTag = dn.getJta().getHighlighter().addHighlight(location.get(--position), location.get(position) + word.length(),
-				painter);
+		if (position > 0) {
+			dn.getJta().getHighlighter().removeHighlight(highlightTag);
+			highlightTag = dn.getJta().getHighlighter().addHighlight(location.get(--position),
+					location.get(position) + word.length(), painter);
+		}
 	}
 }
