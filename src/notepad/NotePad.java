@@ -57,8 +57,7 @@ import java.awt.GraphicsEnvironment;
 import javax.swing.border.TitledBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.ImageIcon;
-import javax.swing.BoxLayout;
-import javax.swing.SwingConstants;
+
 
 /**
  * @author ciunas
@@ -313,15 +312,23 @@ public class NotePad {
 
 		JMenuItem mntmNewMenuItem_2 = new JMenuItem("Set Line Encoding");
 		mnNewMenu.add(mntmNewMenuItem_2);
-		mntmNewMenuItem.setMnemonic(KeyEvent.VK_E);
-		mntmNewMenuItem.setToolTipText("Set theme of Text Editor");
+		mntmNewMenuItem_2.setMnemonic(KeyEvent.VK_E);
+		mntmNewMenuItem_2.setToolTipText("Set theme of Text Editor");
 		mntmNewMenuItem_2.addActionListener((ActionEvent event) -> {
 			setLineEncoding();
 		});
+		
+		JMenuItem mntmNewMenuItem_3 = new JMenuItem("Set Python Executable");
+		mnNewMenu.add(mntmNewMenuItem_3);
+		mntmNewMenuItem_3.setMnemonic(KeyEvent.VK_E);
+		mntmNewMenuItem_3.setToolTipText("Set theme of Text Editor");
+		mntmNewMenuItem_3.addActionListener((ActionEvent event) -> {
+			setPythonLocation();
+		});
 
 		JMenuItem mntmNewMenuItem_1 = new JMenuItem("Help");
-		mntmNewMenuItem.setMnemonic(KeyEvent.VK_E);
-		mntmNewMenuItem.setToolTipText("Set theme of Text Editor");
+		mntmNewMenuItem_1.setMnemonic(KeyEvent.VK_E);
+		mntmNewMenuItem_1.setToolTipText("Set theme of Text Editor");
 		mntmNewMenuItem_1.addActionListener((ActionEvent event) -> {
 			EventQueue.invokeLater(new Runnable() {
 				@Override
@@ -330,15 +337,67 @@ public class NotePad {
 				}
 			});
 
-		});
+		}); 
 		mnNewMenu.add(mntmNewMenuItem_1);
 
 		menuBar.add(Box.createHorizontalGlue());
 		menuBar.add(lblNewLabel_2);
+		
+		JButton btnNewButton = new JButton("Python");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				python();
+			}
+		});
+		menuBar.add(btnNewButton);
 
 		setTreeWD("display");
 		listener = new MyKeyListener();
 		frame.setFocusable(false);
+	}
+
+	private void setPythonLocation() {
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				JFileChooser f = new JFileChooser();
+				f.setDialogTitle("Specify Your Python Executable");
+				f.showSaveDialog(null);
+				if (f.getSelectedFile() != null) {
+					setOrGetPref("Python", f.getSelectedFile().toString(), "set");
+				} else {
+					return;
+				}
+			}
+		});
+	}
+
+	protected void python() {
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				if (activeTab != null && !activeTab.isEmpty()
+						&& activeTab.substring(activeTab.lastIndexOf(".") + 1).contentEquals("py")) {
+					for (String key : mapper.keySet()) {
+						if (key.contentEquals(activeTab)) {
+							if (setOrGetPref("Python", null, "get").contentEquals("UnSet")) {
+								setPythonLocation();
+							}
+							saveFile(mapper.get(activeTab)); 
+							try {
+								@SuppressWarnings("unused")
+								RunPython rp = new RunPython(frame, mapper.get(key).location.toString(),
+										setOrGetPref("Python", null, "get"), setOrGetPref("FontSize", null, "get"),
+										setOrGetPref("FourgColour", null, "get"),
+										setOrGetPref("BackColour", null, "get"), setOrGetPref("FontType", null, "get"));
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							}
+						}
+					}
+				}
+			}
+		});
 	}
 
 	/**
@@ -374,14 +433,11 @@ public class NotePad {
 		if (index == -1) {
 			activeTab = "";
 		} else {
-			System.out.println(activeTab);
 			String temp = activeTab;
 			activeTab = sourceTabbedPane.getTitleAt(index);
-			System.out.println(activeTab);
 			for (String key : mapper.keySet()) {
 				if (key.contentEquals(temp)) {
 					mapper.get(key).getJta().removeKeyListener(listener);
-					System.out.println("GOing False");
 					panel_6.setVisible(state = false);
 					jtf.setText("");
 				} 
@@ -389,7 +445,6 @@ public class NotePad {
 					mapper.get(key).getJta().addKeyListener(listener);
 
 					if (mapper.get(key).search) {
-						System.out.println("Contains active tab");
 						panel_6.setVisible(state = true);
 						jtf.setText(mapper.get(key).ws.getWord());
 					}
@@ -621,6 +676,9 @@ public class NotePad {
 			case "LineEncoding":
 				temp = prefs.get(id, "No");
 				break;
+			case "Python":
+				temp = prefs.get(id, "UnSet");
+				break;
 			default:
 				break;
 			}
@@ -637,7 +695,6 @@ public class NotePad {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				System.out.println("assTab");
 				if (filePath != null && !Files.isDirectory(filePath)) {
 					for (String name : mapper.keySet()) {
 						if (name.contentEquals(filePath.getFileName().toString())) {
@@ -665,9 +722,7 @@ public class NotePad {
 					}
 					dn.getJta().addKeyListener(listener);
 					dn.getJta().setCaretPosition(0);
-					System.out.println("Add Mapper Value");
 					mapper.put(filePath.getFileName().toString(), dn);
-					System.out.println("assTab");
 				} else {
 					JOptionPane.showMessageDialog(frame, "No File Highlighted!", "Hay", JOptionPane.ERROR_MESSAGE);
 				}

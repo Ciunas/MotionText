@@ -17,14 +17,14 @@ public class DataNode {
 	
 	public DataNode(Path location, String fontSize, String fourgColour, String backColour, String fontName){
 		this.location = location;  
-		jta.setForeground(setColour(fourgColour));
-		jta.setBackground(setColour(backColour));
-		jta.setFont(new Font(fontName, Font.PLAIN, Integer.parseInt(fontSize))); 
-		jta.setCaretColor(Color.red);
-		jta.putClientProperty("caretWidth", 2);
-		jta.setFocusable(true); 
-		jta.setMargin( new Insets(6, 6, 0, 0) ); //top,left,bottom,right
-		js.setViewportView(jta);  
+		this.jta.setForeground(setColour(fourgColour));
+		this.jta.setBackground(setColour(backColour));
+		this.jta.setFont(new Font(fontName, Font.PLAIN, Integer.parseInt(fontSize))); 
+		this.jta.setCaretColor(Color.red);
+		this.jta.putClientProperty("caretWidth", 2);
+		this.jta.setFocusable(true); 
+		this.jta.setMargin( new Insets(6, 6, 0, 0) ); //top,left,bottom,right
+		this.js.setViewportView(jta);  
 	}
 
 	public void changeFont(String fontSize, String fourgColour, String backColour, String fontName ){ 

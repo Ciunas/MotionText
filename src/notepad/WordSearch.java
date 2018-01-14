@@ -24,6 +24,7 @@ public class WordSearch {
 		this.word = word.getText().trim();
 	}
 
+	@SuppressWarnings("unused")
 	public int setFirst() throws BadLocationException {
 
 		document = jta.getText();
