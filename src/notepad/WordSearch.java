@@ -3,63 +3,90 @@ package notepad;
 import java.awt.Color;
 import java.util.ArrayList;
 
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
 
 public class WordSearch {
-	
+
 	ArrayList<Integer> location = new ArrayList<Integer>();
 	Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.red);
 	Object highlightTag;
-	DataNode dn;
+	JTextArea jta;
 	String word;
 	String document;
 	int position;
-	
 
-	public WordSearch(DataNode dn, JTextField word) { 
-		this.dn = dn;
+	public WordSearch(JTextArea jta, JTextField word) {
+		this.jta = jta;
 		this.word = word.getText().trim();
 	}
-	
-	public void setFirst() throws BadLocationException {
-		
-		document = dn.getJta().getText();
+
+	public int setFirst() throws BadLocationException {
+
+		document = jta.getText();
 		int i = document.indexOf(word);
 		while (i >= 0) {
 			location.add(i);
 			i = document.indexOf(word, i + 1);
-		}  
-		
+		}
+
 		for (int j = 0; j < location.size(); j++) {
-			if (location.get(j) >= dn.getJta().getCaretPosition()) {
+			if (location.get(j) >= jta.getCaretPosition()) {
 				try {
-					highlightTag = dn.getJta().getHighlighter().addHighlight(location.get(j), location.get(j) + word.length(),
-							painter);					
+					highlightTag = jta.getHighlighter().addHighlight(location.get(j),
+							location.get(j) + word.length(), painter);
 				} catch (BadLocationException e) {
 					e.printStackTrace();
 				}
 				position = j;
-				return;
+				return 0;
+			}else {
+				try {
+					highlightTag = jta.getHighlighter().addHighlight(location.get(0),
+							location.get(0) + word.length(), painter);
+				} catch (BadLocationException e) {
+					e.printStackTrace();
+				}
+				position = 0;
+				return 0;
 			}
 		}
+		return -1;
 	}
-	
-	public void forward() throws BadLocationException { 
-		if (position < location.size()-1) {
-			dn.getJta().getHighlighter().removeHighlight(highlightTag);
-			highlightTag = dn.getJta().getHighlighter().addHighlight(location.get(++position),
+
+	public void forward() throws BadLocationException {
+		if (position < location.size() - 1) {
+			jta.getHighlighter().removeHighlight(highlightTag);
+			highlightTag = jta.getHighlighter().addHighlight(location.get(++position),
+					location.get(position) + word.length(), painter);
+		} else { 
+			jta.getHighlighter().removeHighlight(highlightTag);
+			highlightTag = jta.getHighlighter().addHighlight(location.get(position = 0),
 					location.get(position) + word.length(), painter);
 		}
 	}
 
 	public void backwards() throws BadLocationException {
 		if (position > 0) {
-			dn.getJta().getHighlighter().removeHighlight(highlightTag);
-			highlightTag = dn.getJta().getHighlighter().addHighlight(location.get(--position),
+			jta.getHighlighter().removeHighlight(highlightTag);
+			highlightTag = jta.getHighlighter().addHighlight(location.get(--position),
+					location.get(position) + word.length(), painter);
+		} else { 
+			jta.getHighlighter().removeHighlight(highlightTag);
+			highlightTag = jta.getHighlighter().addHighlight(location.get(position = location.size() - 1),
 					location.get(position) + word.length(), painter);
 		}
 	}
+	
+	public void removeHighlight() {
+		jta.getHighlighter().removeHighlight(highlightTag);
+	}
+	
+	public String getWord() {
+		return word;
+	}
+
 }

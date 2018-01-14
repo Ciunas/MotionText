@@ -3,8 +3,7 @@ package notepad;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Insets;
-import java.nio.file.Path;
-
+import java.nio.file.Path; 
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea; 
 
@@ -13,6 +12,8 @@ public class DataNode {
 	JScrollPane js = new JScrollPane(); 
 	JTextArea jta = new JTextArea(); 
 	Path location;
+	WordSearch ws;
+	boolean search = false;
 	
 	public DataNode(Path location, String fontSize, String fourgColour, String backColour, String fontName){
 		this.location = location;  
@@ -25,7 +26,7 @@ public class DataNode {
 		jta.setMargin( new Insets(6, 6, 0, 0) ); //top,left,bottom,right
 		js.setViewportView(jta);  
 	}
-	
+
 	public void changeFont(String fontSize, String fourgColour, String backColour, String fontName ){ 
 		jta.setForeground(setColour(fourgColour));
 		jta.setBackground(setColour(backColour));
@@ -46,37 +47,32 @@ public class DataNode {
 		}
 		return col[i];
 	} 
+	
+	public WordSearch getWs() {
+		return ws;
+	}
+
+	public void setWs(WordSearch ws) {
+		this.ws = ws;
+	}
+	
+	public boolean isSearch() {
+		return search;
+	}
+
+	public void setSearch(boolean search) {
+		this.search = search;
+	}
 
 	public Path getLocation() {
 		return location;
-	}
-
-	public void setLocation(Path location) {
-		this.location = location;
-	}
+	} 
 
 	public JScrollPane getJs() {
 		return js;
-	}
-
-	public void setJs(JScrollPane js) {
-		this.js = js;
-	}
+	} 
 
 	public JTextArea getJta() {
 		return jta;
 	}
-
-	public void setJta(JTextArea jta) {
-		this.jta = jta;
-	}
-	
-	public String getJText() {
-		
-		return jta.getText();
-	}
-	
-	public void appendJText(String text) {
-		jta.append(text);
-	}	 
 }
