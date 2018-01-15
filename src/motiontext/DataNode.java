@@ -1,16 +1,25 @@
-package notepad;
+package motiontext;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.Insets;
+import java.awt.FontMetrics;
+import java.awt.Insets; 
 import java.nio.file.Path; 
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea; 
+import javax.swing.JTextPane;
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.TabSet;
+import javax.swing.text.TabStop;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.UndoManager; 
 
 public class DataNode {
-
+	UndoManager undoManager = new UndoManager();
 	JScrollPane js = new JScrollPane(); 
-	JTextArea jta = new JTextArea(); 
+	JTextPane jta = new JTextPane(); 
 	Path location;
 	WordSearch ws;
 	boolean search = false;
@@ -23,8 +32,14 @@ public class DataNode {
 		this.jta.setCaretColor(Color.red);
 		this.jta.putClientProperty("caretWidth", 2);
 		this.jta.setFocusable(true); 
-		this.jta.setMargin( new Insets(6, 6, 0, 0) ); //top,left,bottom,right
-		this.js.setViewportView(jta);  
+		this.jta.setMargin(new Insets(6, 6, 0, 0)); // top,left,bottom,right
+		jta.getDocument().addUndoableEditListener(new UndoableEditListener() {
+			public void undoableEditHappened(UndoableEditEvent e) {
+				undoManager.addEdit(e.getEdit()); 
+			}
+		});
+		this.js.setViewportView(jta); 
+		setTabs(4);
 	}
 
 	public void changeFont(String fontSize, String fourgColour, String backColour, String fontName ){ 
@@ -48,6 +63,44 @@ public class DataNode {
 		return col[i];
 	} 
 	
+	
+
+	public void setTabs(int charactersPerTab) {
+		FontMetrics fm = jta.getFontMetrics(jta.getFont());
+		int charWidth = fm.charWidth(' ');
+		int tabWidth = charWidth * charactersPerTab;
+
+		TabStop[] tabs = new TabStop[12];
+
+		for (int j = 0; j < tabs.length; j++) {
+			int tab = j + 1;
+			tabs[j] = new TabStop(tab * tabWidth);
+		}
+
+		TabSet tabSet = new TabSet(tabs);
+        SimpleAttributeSet attributes = new SimpleAttributeSet();
+        StyleConstants.setTabSet(attributes, tabSet);
+        int length = jta.getDocument().getLength();
+        jta.getStyledDocument().setParagraphAttributes(0, length, attributes, false);
+
+	}
+
+	public void undo() {
+		try {
+			undoManager.undo();
+		} catch (CannotRedoException cre) {
+			cre.printStackTrace();
+		}
+	}
+
+	public void redo() {
+		try {
+			undoManager.redo();
+		} catch (CannotRedoException cre) {
+			cre.printStackTrace();
+		}
+	}
+
 	public WordSearch getWs() {
 		return ws;
 	}
@@ -72,7 +125,7 @@ public class DataNode {
 		return js;
 	} 
 
-	public JTextArea getJta() {
+	public JTextPane getJta() {
 		return jta;
 	}
 }

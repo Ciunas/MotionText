@@ -1,38 +1,44 @@
-package notepad;
+package motiontext;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader; 
+import java.io.InputStreamReader;
+import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JDialog; 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.JTextPane;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 
 public class RunPython extends JDialog{
 	
 	private static final long serialVersionUID = 1L;
 	String scriptPath;
 	String executabelPath;
-	JTextArea textArea =  new JTextArea();
+	MyTextPane textArea =  new MyTextPane();
 
-	public RunPython(Frame parent, String scriptPath, String executabelPath, String fontSize, String fourgColour, String backColour, String fontName) throws IOException {
+	public RunPython(Frame parent, String scriptPath, String executabelPath, String fontSize, String fontName) throws IOException, BadLocationException {
 		super(parent, "Python Output", true);
 		
 		this.scriptPath = scriptPath;
 		this.executabelPath = executabelPath;		
-		this.textArea.setForeground(setColour(fourgColour));
-		this.textArea.setBackground(setColour(backColour));
+		this.textArea.setForeground(Color.WHITE);
+		this.textArea.setBackground(Color.BLACK);
 		this.textArea.setFont(new Font(fontName, Font.PLAIN, Integer.parseInt(fontSize))); 
+		this.textArea.setEditable(false); 
 		
 		if (parent != null) {
 			Dimension parentSize = parent.getSize();
@@ -55,7 +61,6 @@ public class RunPython extends JDialog{
 		JScrollPane scrollPane = new JScrollPane();
 		myPanel.add(scrollPane, BorderLayout.CENTER);
 
-		textArea = new JTextArea();
 		textArea.setMargin( new Insets(6, 6, 0, 0) ); //top,left,bottom,right
 		scrollPane.setViewportView(textArea);
 		
@@ -72,7 +77,7 @@ public class RunPython extends JDialog{
 	}
 	 
 
-	public void run() throws IOException {
+	public void run() throws IOException, BadLocationException {
 
 		String[] cmd = new String[2];
 		cmd[0] = executabelPath;
@@ -85,28 +90,34 @@ public class RunPython extends JDialog{
 		BufferedReader bfr = new BufferedReader(new InputStreamReader(pr.getInputStream()));
 		String line = "";
 		
+		Document doc = textArea.getDocument();
 		while ((line = bfr.readLine()) != null) {
-			textArea.append(line + "\n");
-			System.out.println(line);
+			doc.insertString(doc.getLength(), line + "\n", null);
 		}
 
 		while ((line = stdError.readLine()) != null) {
-			textArea.append(line + "\n");
-			System.out.println(line);
+			doc.insertString(doc.getLength(), line + "\n", null);
+		}
+	} 
+	
+	private static class MyTextPane extends JTextPane {
+		private static final long serialVersionUID = 1L;
+		public MyTextPane() {
+			super();
+			setOpaque(false);
+		}
+
+		@Override
+		protected void paintComponent(Graphics g) {
+			Image img = null;
+			try {
+				img = ImageIO.read(MotionText.class.getResource("/resources/python.png"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			g.drawImage(img, 225, 50, this);
+			super.paintComponent(g);
 		}
 	}
-	
-	private Color setColour(String colStr) {
-		Color[] col = { Color.BLACK, Color.BLUE, Color.GRAY, Color.GREEN, Color.ORANGE, Color.RED, Color.WHITE,
-				Color.YELLOW, Color.PINK };
-		String[] colours = { "Black", "Blue", "Gray", "Green", "Orange", "Red", "White", "Yellow", "Pink" };
-		int i;
-		for (i = 0; i < colours.length ; i++) {
-			if (colStr.equals(colours[i])) {
-				break;
-			}
-		}
-		return col[i];
-	} 
 
 }

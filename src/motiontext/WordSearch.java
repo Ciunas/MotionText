@@ -1,10 +1,9 @@
-package notepad;
+package motiontext;
 
 import java.awt.Color;
-import java.util.ArrayList;
-
-import javax.swing.JTextArea;
+import java.util.ArrayList; 
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
@@ -14,12 +13,12 @@ public class WordSearch {
 	ArrayList<Integer> location = new ArrayList<Integer>();
 	Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.red);
 	Object highlightTag;
-	JTextArea jta;
+	JTextPane jta;
 	String word;
 	String document;
 	int position;
 
-	public WordSearch(JTextArea jta, JTextField word) {
+	public WordSearch(JTextPane jta, JTextField word) {
 		this.jta = jta;
 		this.word = word.getText().trim();
 	}

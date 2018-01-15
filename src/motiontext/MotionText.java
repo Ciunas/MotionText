@@ -1,4 +1,4 @@
-package notepad;
+package motiontext;
 
 import java.awt.EventQueue;
 import javax.swing.JFrame;
@@ -19,7 +19,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.text.BadLocationException; 
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeSelectionModel;
@@ -64,7 +65,7 @@ import javax.swing.ImageIcon;
  *
  */
 
-public class NotePad {
+public class MotionText{
 
 	HashMap<String, DataNode> mapper = new HashMap<String, DataNode>();
 	private static Preferences prefs;
@@ -94,7 +95,7 @@ public class NotePad {
 					e1.printStackTrace();
 				}
 				try {
-					NotePad window = new NotePad();
+					MotionText window = new MotionText();
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -106,7 +107,7 @@ public class NotePad {
 	/**
 	 * Create the application.
 	 */
-	public NotePad() {
+	public MotionText() {
 		initialize();
 	}
 
@@ -153,15 +154,17 @@ public class NotePad {
 
 		JButton btn = new JButton("");
 		panel_6.add(btn, "cell 2 0");
-		btn.setIcon(new ImageIcon(NotePad.class.getResource("/resources/down.png")));
+		btn.setIcon(new ImageIcon(MotionText.class.getResource("/resources/down.png")));
 
 		JButton lbl = new JButton("");
 		panel_6.add(lbl, "cell 3 0");
-		lbl.setIcon(new ImageIcon(NotePad.class.getResource("/resources/up.png")));
+		lbl.setIcon(new ImageIcon(MotionText.class.getResource("/resources/up.png")));
 		
 		JLabel lblNewLabel_1 = new JLabel("Made By: Ciunas Bennett");
 		lblNewLabel_1.setFont(new Font("Dialog", Font.ITALIC, 10));
 		panel_6.add(lblNewLabel_1, "cell 5 0");
+		
+		
 		lbl.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				for (String key : mapper.keySet()) {
@@ -380,17 +383,23 @@ public class NotePad {
 						&& activeTab.substring(activeTab.lastIndexOf(".") + 1).contentEquals("py")) {
 					for (String key : mapper.keySet()) {
 						if (key.contentEquals(activeTab)) {
-							if (setOrGetPref("Python", null, "get").contentEquals("UnSet")) {
-								setPythonLocation();
+							if (setOrGetPref("Python", null, "get").contentEquals("UnSet")) { 
+										JFileChooser f = new JFileChooser();
+										f.setDialogTitle("Specify Your Python Executable");
+										f.showSaveDialog(null);
+										if (f.getSelectedFile() != null) {
+											setOrGetPref("Python", f.getSelectedFile().toString(), "set");
+										} else {
+											return;
+										} 
 							}
-							saveFile(mapper.get(activeTab)); 
+							saveFile(mapper.get(activeTab));
 							try {
 								@SuppressWarnings("unused")
 								RunPython rp = new RunPython(frame, mapper.get(key).location.toString(),
 										setOrGetPref("Python", null, "get"), setOrGetPref("FontSize", null, "get"),
-										setOrGetPref("FourgColour", null, "get"),
-										setOrGetPref("BackColour", null, "get"), setOrGetPref("FontType", null, "get"));
-							} catch (IOException e1) {
+										setOrGetPref("FontType", null, "get"));
+							} catch (IOException | BadLocationException e1) {
 								e1.printStackTrace();
 							}
 						}
@@ -714,8 +723,13 @@ public class NotePad {
 							new ButtonTabComponent(tabbedPane, mapper, filePath.getFileName().toString()));
 					tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
 					try (BufferedReader br = new BufferedReader(new FileReader(filePath.toString()))) {
+					    Document doc = dn.getJta().getDocument();
 						while ((line = br.readLine()) != null) {
-							dn.getJta().append(line + "\n");
+							try {
+								doc.insertString(doc.getLength(), line + "\n", null);
+							} catch (BadLocationException e) { 
+								e.printStackTrace();
+							} 
 						}
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -738,7 +752,7 @@ public class NotePad {
 			@Override
 			public void run() {
 				Integer waitSeconds = 3;
-				lblNewLabel_2.setIcon(new ImageIcon(NotePad.class.getResource("/resources/ic_penguin.gif")));
+				lblNewLabel_2.setIcon(new ImageIcon(MotionText.class.getResource("/resources/ic_penguin.gif")));
 				Timer timer = new Timer(waitSeconds * 1000, new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -814,6 +828,8 @@ public class NotePad {
 		boolean ctl = false;
 		boolean s = false;
 		boolean f = false;
+		boolean z = false;
+		boolean x = false;
 
 		@Override
 		public void keyTyped(KeyEvent e) {
@@ -825,11 +841,17 @@ public class NotePad {
 			case KeyEvent.VK_CONTROL:
 				ctl = true;
 				break;
+			case KeyEvent.VK_X: 
+				x = true;
+				break;
 			case KeyEvent.VK_S:
 				s = true;
 				break;
 			case KeyEvent.VK_F:
 				f = true;
+				break;
+			case KeyEvent.VK_Z: 
+				z = true;
 				break;
 			}
 		}
@@ -842,11 +864,26 @@ public class NotePad {
 			} else if (ctl == true && f == true) {
 				state = !state;
 				panel_6.setVisible(state);
+			}else if (ctl == true && z == true) {
+				for (String key : mapper.keySet()) {
+					if (key.contentEquals(activeTab)) {
+						mapper.get(key).undo();
+					}
+				}
+			}else if (ctl == true && x == true) {
+				for (String key : mapper.keySet()) { 
+					if (key.contentEquals(activeTab)) {
+						mapper.get(key).redo();
+					}
+				}
 			}
 
 			switch (e.getKeyCode()) {
 			case KeyEvent.VK_CONTROL:
 				ctl = false;
+				break;
+			case KeyEvent.VK_X:
+				x = false;
 				break;
 			case KeyEvent.VK_S:
 				s = false;
@@ -854,10 +891,15 @@ public class NotePad {
 			case KeyEvent.VK_F:
 				f = false;
 				break;
+			case KeyEvent.VK_Z:
+				z = false;
+				break;
 			default:
 				s = false;
 				ctl = false;
+				x = false;
 				f = false;
+				z = false;
 				break;
 			}
 		}
