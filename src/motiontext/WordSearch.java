@@ -12,7 +12,7 @@ public class WordSearch {
 
 	ArrayList<Integer> location = new ArrayList<Integer>();
 	Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.red);
-	Object highlightTag;
+	Object highlightTag = null;
 	JTextPane jta;
 	String word;
 	String document;
@@ -82,7 +82,10 @@ public class WordSearch {
 	}
 	
 	public void removeHighlight() {
-		jta.getHighlighter().removeHighlight(highlightTag);
+		System.out.println("Here");
+		if(!(highlightTag == null)) {
+			jta.getHighlighter().removeHighlight(highlightTag);
+		} 
 	}
 	
 	public String getWord() {

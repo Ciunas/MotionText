@@ -12,17 +12,17 @@ import javax.swing.UnsupportedLookAndFeelException;
 import java.awt.Color;
 import java.awt.Component;
 import javax.swing.Box;
-import javax.swing.JButton; 
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeListener; 
 import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.TreeSelectionListener; 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeCellRenderer; 
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.GridLayout;
 import java.io.BufferedReader;
@@ -34,7 +34,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths; 
-import java.util.HashMap; 
+import java.util.HashMap;
 import java.util.prefs.Preferences;
 import net.miginfocom.swing.MigLayout;
 import javax.swing.JLabel;
@@ -48,6 +48,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.event.ActionEvent;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -59,18 +61,17 @@ import javax.swing.border.TitledBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.ImageIcon;
 
-
 /**
  * @author ciunas
  *
  */
 
-public class MotionText{
+public class MotionText {
 
-	HashMap<String, DataNode> mapper = new HashMap<String, DataNode>();
-	private static Preferences prefs;
-	private Path filePath; 
-	private String activeTab ="";
+	private HashMap<String, DataNode> mapper = new HashMap<String, DataNode>(); 
+	private static Preferences prefs; 
+	private Path filePath;
+	private String activeTab = "";
 	private JScrollPane scrollPane_1;
 	private JLabel lblNewLabel_2;
 	private JFrame frame;
@@ -80,9 +81,10 @@ public class MotionText{
 	private JPanel panel_6;
 	private boolean state; 
 	private JTextField textField_1;
+	private String expandedNodes = "0";
 
 	/**
-	 * Launch the application. 
+	 * Launch the application.
 	 */
 	public static void main(String[] args) throws InvocationTargetException, InterruptedException {
 		EventQueue.invokeAndWait(new Runnable() {
@@ -144,6 +146,7 @@ public class MotionText{
 		panel_6.setLayout(new MigLayout("", "[][][][][grow][]", "[10px,grow]"));
 
 		textField_1 = new JTextField();
+		textField_1.setFocusable(true);
 		textField_1.setPreferredSize(new Dimension(200, 19));
 		panel_6.add(textField_1, "cell 0 0");
 
@@ -159,12 +162,11 @@ public class MotionText{
 		JButton lbl = new JButton("");
 		panel_6.add(lbl, "cell 3 0");
 		lbl.setIcon(new ImageIcon(MotionText.class.getResource("/resources/up.png")));
-		
+
 		JLabel lblNewLabel_1 = new JLabel("Made By: Ciunas Bennett");
 		lblNewLabel_1.setFont(new Font("Dialog", Font.ITALIC, 10));
 		panel_6.add(lblNewLabel_1, "cell 5 0");
-		
-		
+
 		lbl.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				for (String key : mapper.keySet()) {
@@ -232,7 +234,7 @@ public class MotionText{
 		JButton btnChangePwd = new JButton("Set");
 		btnChangePwd.setToolTipText("Set the location of the working directory.");
 		btnChangePwd.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
+			public void actionPerformed(ActionEvent arg0) { 
 				setTreeWD("chooseFile");
 			}
 		});
@@ -320,7 +322,7 @@ public class MotionText{
 		mntmNewMenuItem_2.addActionListener((ActionEvent event) -> {
 			setLineEncoding();
 		});
-		
+
 		JMenuItem mntmNewMenuItem_3 = new JMenuItem("Set Python Executable");
 		mnNewMenu.add(mntmNewMenuItem_3);
 		mntmNewMenuItem_3.setMnemonic(KeyEvent.VK_E);
@@ -340,12 +342,12 @@ public class MotionText{
 				}
 			});
 
-		}); 
+		});
 		mnNewMenu.add(mntmNewMenuItem_1);
 
 		menuBar.add(Box.createHorizontalGlue());
 		menuBar.add(lblNewLabel_2);
-		
+
 		JButton btnNewButton = new JButton("Python");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -353,12 +355,81 @@ public class MotionText{
 			}
 		});
 		menuBar.add(btnNewButton);
-
+		
+	    frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+	    frame.addWindowListener(new WindowAdapter() {
+	        @Override
+	        public void windowClosing(WindowEvent event) {
+	            exitProcedure();
+	        }
+	    });
+	    listener = new MyKeyListener();
 		setTreeWD("display");
-		listener = new MyKeyListener();
+		setSavedTabs(); 
 		frame.setFocusable(false);
 	}
+	
+	/**
+	 * Saves all open tabs when closed
+	 */
+	private void exitProcedure() {
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				StringBuilder tabs = new StringBuilder();
+				for (String key : mapper.keySet()) {
+					saveFile(mapper.get(key));
+					tabs.append(mapper.get(key).getLocation().toString() + "&");
+				}
+				setOrGetPref("StartTabs", tabs.toString(), "set");
+				frame.dispose();
+				System.exit(0);
+			}
+		});
+	}
 
+	/**
+	 * Displays tabs that were open at last time of close
+	 */
+	private void setSavedTabs() {
+		if (!setOrGetPref("StartTabs", null, "get").contentEquals("")) {
+			String tabs[] = setOrGetPref("StartTabs", null, "get").split("&");
+			Path file = Paths.get(tabs[0]);
+			activeTab =  file.getFileName().toString();
+			for (int i = 0; i < tabs.length; i++) {
+				
+				Path fileP = Paths.get(tabs[i]); 
+				String line;
+				DataNode dn = new DataNode(fileP, setOrGetPref("FontSize", null, "get"),
+						setOrGetPref("FourgColour", null, "get"), setOrGetPref("BackColour", null, "get"),
+						setOrGetPref("FontType", null, "get"));
+				tabbedPane.addTab(fileP.getFileName().toString(), null, dn.getJs());
+				tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1,
+						new ButtonTabComponent(tabbedPane, mapper, fileP.getFileName().toString()));
+				tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
+				try (BufferedReader br = new BufferedReader(new FileReader(fileP.toString()))) {
+				    Document doc = dn.getJta().getDocument();
+					while ((line = br.readLine()) != null) {
+						try {
+							doc.insertString(doc.getLength(), line + "\n", null);
+						} catch (BadLocationException e) { 
+							e.printStackTrace();
+						} 
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				dn.getJta().addKeyListener(listener);
+				dn.getJta().setCaretPosition(0);
+				mapper.put(fileP.getFileName().toString(), dn);
+			} 
+			System.out.println("mapper size: " + mapper.size());
+		}
+	}
+
+	/**
+	 *Sets the Python executable location.
+	 */
 	private void setPythonLocation() {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
@@ -375,6 +446,9 @@ public class MotionText{
 		});
 	}
 
+	/**
+	 *Ability to run python code form inside window.
+	 */
 	protected void python() {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
@@ -383,15 +457,15 @@ public class MotionText{
 						&& activeTab.substring(activeTab.lastIndexOf(".") + 1).contentEquals("py")) {
 					for (String key : mapper.keySet()) {
 						if (key.contentEquals(activeTab)) {
-							if (setOrGetPref("Python", null, "get").contentEquals("UnSet")) { 
-										JFileChooser f = new JFileChooser();
-										f.setDialogTitle("Specify Your Python Executable");
-										f.showSaveDialog(null);
-										if (f.getSelectedFile() != null) {
-											setOrGetPref("Python", f.getSelectedFile().toString(), "set");
-										} else {
-											return;
-										} 
+							if (setOrGetPref("Python", null, "get").contentEquals("UnSet")) {
+								JFileChooser f = new JFileChooser();
+								f.setDialogTitle("Specify Your Python Executable");
+								f.showSaveDialog(null);
+								if (f.getSelectedFile() != null) {
+									setOrGetPref("Python", f.getSelectedFile().toString(), "set");
+								} else {
+									return;
+								}
 							}
 							saveFile(mapper.get(activeTab));
 							try {
@@ -412,26 +486,27 @@ public class MotionText{
 	/**
 	 * Search for a word in JTextArea
 	 */
-	public void search(JTextField textField) throws BadLocationException {		
-		if (!textField.getText().contentEquals("")) { 
-			for (String key : mapper.keySet()) { 
-				if (key.contentEquals(activeTab) ) {  
-					if(mapper.get(key).isSearch()) {
+	public void search(JTextField textField) throws BadLocationException {
+		if (!textField.getText().contentEquals("")) {
+			for (String key : mapper.keySet()) {
+				System.out.println("Wordsearch: " + key);
+				if (key.contentEquals(activeTab)) {
+					if (mapper.get(key).isSearch()) {
 						mapper.get(key).ws.removeHighlight();
 					}
-					try {   
+					try {
 						WordSearch ws = new WordSearch(mapper.get(key).getJta(), textField);
-						if(ws.setFirst() == -1)
+						if (ws.setFirst() == -1)
 							return;
-						mapper.get(key).setWs(ws); 
+						mapper.get(key).setWs(ws);
 						mapper.get(key).setSearch(true);
 					} catch (BadLocationException e) {
 						e.printStackTrace();
 					}
 				}
 			}
-		}  
-	}	
+		}
+	}
 
 	/**
 	 * Monitors change in active tab
@@ -442,20 +517,24 @@ public class MotionText{
 		if (index == -1) {
 			activeTab = "";
 		} else {
+			System.out.println("Tabevent");
 			String temp = activeTab;
+			System.out.println(temp);
 			activeTab = sourceTabbedPane.getTitleAt(index);
+			System.out.println(activeTab);
 			for (String key : mapper.keySet()) {
 				if (key.contentEquals(temp)) {
+					System.out.println("Temp");
 					mapper.get(key).getJta().removeKeyListener(listener);
-					panel_6.setVisible(state = false);
-					jtf.setText("");
-				} 
-				else if (key.contentEquals(activeTab)) {
+				} else if (key.contentEquals(activeTab)) {
+					System.out.println("Active Tab");
 					mapper.get(key).getJta().addKeyListener(listener);
-
 					if (mapper.get(key).search) {
 						panel_6.setVisible(state = true);
 						jtf.setText(mapper.get(key).ws.getWord());
+					} else {
+						panel_6.setVisible(state = false);
+						jtf.setText("");
 					}
 				}
 			}
@@ -480,8 +559,9 @@ public class MotionText{
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
-					filePath = Paths.get(fileToSave.toString()); 
-					addTab(tabbedPane);
+					filePath = Paths.get(fileToSave.toString());
+					addTab(tabbedPane); 
+					expandedNodes = getExpansionState("New", fileToSave.getParent().toString());
 					setTreeWD("display");
 				}
 			}
@@ -592,7 +672,7 @@ public class MotionText{
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				if (!Files.isDirectory(filePath)) {
+				if (!Files.isDirectory(filePath)) { 	
 					File file = new File(filePath.toString());
 					int reply = JOptionPane.showConfirmDialog(frame,
 							"Delete Following File: " + filePath.getFileName().toString(), "Delete",
@@ -609,12 +689,13 @@ public class MotionText{
 									}
 								}
 							}
+							expandedNodes = getExpansionState("Del", filePath.toString());
+							setTreeWD("display");
 							if (temp != null && !temp.isEmpty()) {
 								mapper.remove(temp);
 								filePath = Paths.get(setOrGetPref("Root", null, "get"));
-							}
-							setTreeWD("display");
-						}  
+							} 
+						}
 					}
 				} else
 					JOptionPane.showMessageDialog(frame, "No File to Delete!");
@@ -623,7 +704,7 @@ public class MotionText{
 	}
 
 	/**
-	 * Builds a JTree 
+	 * Builds a JTree
 	 */
 	private static DefaultMutableTreeNode addNodes(File dir) {
 		DefaultMutableTreeNode node = new DefaultMutableTreeNode(dir);
@@ -646,8 +727,8 @@ public class MotionText{
 				if (setOrGetPref("LineEncoding", null, "get").contentEquals("Yes")) {
 					bw.write(dataNode.getJta().getText());
 				} else
-					dataNode.getJta().write(bw); 
-				displayInfo("Saved: " + dataNode.getLocation().getFileName().toString()); 
+					dataNode.getJta().write(bw);
+				displayInfo("Saved: " + dataNode.getLocation().getFileName().toString());
 			} catch (Exception e) {
 				System.err.println("Error: " + e.getMessage());
 			}
@@ -655,46 +736,6 @@ public class MotionText{
 		} else {
 			JOptionPane.showMessageDialog(frame, "No File to Save!", "Hay", JOptionPane.ERROR_MESSAGE);
 		}
-	}
-
-	/**
-	 * Checks for user settings, returns setting if present
-	 */
-	private String setOrGetPref(String id, String value, String SetGet) {
-		if (SetGet.equals("get")) {
-			String temp = null;
-			switch (id) {
-			case "Root":
-				temp = prefs.get(id, ".");
-				break;
-			case "FontSize":
-				temp = prefs.get(id, "14");
-				break;
-			case "FourgColour":
-				temp = prefs.get(id, "Black");
-				break;
-			case "BackColour":
-				temp = prefs.get(id, "White");
-				break;
-			case "Theme":
-				temp = prefs.get(id, "noire.Noire");
-				break;
-			case "FontType":
-				temp = prefs.get(id, "Calibri");
-				break;
-			case "LineEncoding":
-				temp = prefs.get(id, "No");
-				break;
-			case "Python":
-				temp = prefs.get(id, "UnSet");
-				break;
-			default:
-				break;
-			}
-			return temp;
-		} else
-			prefs.put(id, value);
-		return "";
 	}
 
 	/**
@@ -740,9 +781,10 @@ public class MotionText{
 				} else {
 					JOptionPane.showMessageDialog(frame, "No File Highlighted!", "Hay", JOptionPane.ERROR_MESSAGE);
 				}
+				panel_6.setVisible(false);
 			}
 		});
-	}
+}
 
 	/**
 	 * Displays info about file saved
@@ -785,7 +827,6 @@ public class MotionText{
 					}
 				} else
 					tree = new JTree(addNodes(new File(setOrGetPref("Root", null, "get"))));
-
 				tree.setRootVisible(true);
 				tree.setShowsRootHandles(false);
 				tree.setToggleClickCount(10);
@@ -793,16 +834,15 @@ public class MotionText{
 				tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 				tree.setCellRenderer(new FileTreeCellRenderer());
 				scrollPane_1.setViewportView(tree);
-				tree.addTreeSelectionListener(new TreeSelectionListener() {
+				tree.addTreeSelectionListener(new TreeSelectionListener() {					
 					@Override
 					public void valueChanged(TreeSelectionEvent e) {
 						DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree
 								.getLastSelectedPathComponent();
-						Object userObject = selectedNode.getUserObject(); 
-						filePath = Paths.get(userObject.toString());  
+						Object userObject = selectedNode.getUserObject();
+						filePath = Paths.get(userObject.toString()); 
 					}
 				});
-
 				MouseListener ml = new MouseAdapter() {
 					public void mousePressed(MouseEvent e) {
 						int selRow = tree.getRowForLocation(e.getX(), e.getY());
@@ -816,8 +856,46 @@ public class MotionText{
 					}
 				};
 				tree.addMouseListener(ml);
+				setExpansionState(expandedNodes); 
 			}
 		});
+	}
+
+	/**
+	 * returns comma delimited string containing all expanded nodes.
+	 */
+	public String getExpansionState(String alterType, String path) {
+		int location = 0;
+		for (int i = 0; i < tree.getRowCount(); i++) {
+			if (tree.getPathForRow(i).toString().contains(path.toString())) {
+				location = i;
+				break;
+			}
+		}
+		System.out.println(location + " Location");
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < tree.getRowCount(); i++) {
+			if (tree.isExpanded(i)) {
+				if (alterType.contentEquals("New") && location < i && tree.isExpanded(location)) {
+					sb.append(i + 1).append(",");
+				} else if (alterType.contentEquals("Del") && location < i) {
+					sb.append(i - 1).append(",");
+				} else
+					sb.append(i).append(",");
+			}
+		} 
+		return sb.toString();
+	}
+
+	/**
+	 * Sets the expansion state based upon a comma delimited list of row indexes
+	 */
+	public void setExpansionState(String s) {
+		String[] indexes = s.split(",");
+		for (String st : indexes) {
+			int row = Integer.parseInt(st);
+			tree.expandRow(row);
+		}
 	}
 
 	/**
@@ -841,7 +919,7 @@ public class MotionText{
 			case KeyEvent.VK_CONTROL:
 				ctl = true;
 				break;
-			case KeyEvent.VK_X: 
+			case KeyEvent.VK_X:
 				x = true;
 				break;
 			case KeyEvent.VK_S:
@@ -850,7 +928,7 @@ public class MotionText{
 			case KeyEvent.VK_F:
 				f = true;
 				break;
-			case KeyEvent.VK_Z: 
+			case KeyEvent.VK_Z:
 				z = true;
 				break;
 			}
@@ -858,20 +936,28 @@ public class MotionText{
 
 		@Override
 		public void keyReleased(KeyEvent e) {
-			
+
 			if (ctl == true && s == true) {
-				saveFile(mapper.get(activeTab)); 
+				saveFile(mapper.get(activeTab));
 			} else if (ctl == true && f == true) {
 				state = !state;
 				panel_6.setVisible(state);
-			}else if (ctl == true && z == true) {
+				
+				if(state ==  false) {
+					if(mapper.get(activeTab).search ==  true) {
+						mapper.get(activeTab).search = false; 
+						mapper.get(activeTab).ws.removeHighlight();
+					} 
+				}else
+					textField_1.requestFocusInWindow(); 
+			} else if (ctl == true && z == true) {
 				for (String key : mapper.keySet()) {
 					if (key.contentEquals(activeTab)) {
 						mapper.get(key).undo();
 					}
 				}
-			}else if (ctl == true && x == true) {
-				for (String key : mapper.keySet()) { 
+			} else if (ctl == true && x == true) {
+				for (String key : mapper.keySet()) {
 					if (key.contentEquals(activeTab)) {
 						mapper.get(key).redo();
 					}
@@ -903,6 +989,49 @@ public class MotionText{
 				break;
 			}
 		}
+	}
+	
+	/**
+	 * Checks for user settings, returns setting if present
+	 */
+	private String setOrGetPref(String id, String value, String SetGet) {
+		if (SetGet.equals("get")) {
+			String temp = null;
+			switch (id) {
+			case "Root":
+				temp = prefs.get(id, ".");
+				break;
+			case "FontSize":
+				temp = prefs.get(id, "14");
+				break;
+			case "FourgColour":
+				temp = prefs.get(id, "Black");
+				break;
+			case "BackColour":
+				temp = prefs.get(id, "White");
+				break;
+			case "Theme":
+				temp = prefs.get(id, "noire.Noire");
+				break;
+			case "FontType":
+				temp = prefs.get(id, "Calibri");
+				break;
+			case "LineEncoding":
+				temp = prefs.get(id, "No");
+				break;
+			case "Python":
+				temp = prefs.get(id, "UnSet");
+				break;
+			case "StartTabs":
+				temp = prefs.get(id, "");
+				break;
+			default:
+				break;
+			}
+			return temp;
+		} else
+			prefs.put(id, value);
+		return "";
 	}
 
 	/**
