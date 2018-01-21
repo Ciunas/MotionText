@@ -1,5 +1,7 @@
 package motiontext;
 
+import com.inet.jortho.SpellChecker;
+import com.inet.jortho.FileUserDictionary;
 import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -118,7 +120,7 @@ public class MotionText {
 	 */
 	private void initialize() {
 
-		frame = new JFrame();
+		frame = new JFrame("MotionText");
 		frame.setMinimumSize(new Dimension(400, 400));
 		frame.setBounds(100, 100, 1200, 785);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -147,7 +149,7 @@ public class MotionText {
 
 		textField_1 = new JTextField();
 		textField_1.setFocusable(true);
-		textField_1.setPreferredSize(new Dimension(200, 19));
+		textField_1.setPreferredSize(new Dimension(300, 19));
 		panel_6.add(textField_1, "cell 0 0");
 
 		JButton chckbxExact = new JButton("Find");
@@ -165,7 +167,17 @@ public class MotionText {
 
 		JLabel lblNewLabel_1 = new JLabel("Made By: Ciunas Bennett");
 		lblNewLabel_1.setFont(new Font("Dialog", Font.ITALIC, 10));
-		panel_6.add(lblNewLabel_1, "cell 5 0");
+		panel_6.add(lblNewLabel_1, "flowx,cell 5 0");
+		
+		JButton btnX = new JButton("X");
+		btnX.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				toggleFind();	
+			}
+		});
+		btnX.setPreferredSize(new Dimension(25, 10));
+		btnX.setFont(new Font("Dialog", Font.BOLD, 10));
+		panel_6.add(btnX, "cell 5 0");
 
 		lbl.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -253,7 +265,7 @@ public class MotionText {
 		panel_7.add(lblNewLabel, "cell 0 0 2 1");
 
 		JPanel panel_8 = new JPanel();
-		panel_8.setBorder(new TitledBorder(null, "File stuff", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel_8.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "File", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(51, 51, 51)));
 		panel_3.add(panel_8, BorderLayout.SOUTH);
 		panel_8.setLayout(new GridLayout(2, 2, 0, 0));
 
@@ -354,6 +366,9 @@ public class MotionText {
 				python();
 			}
 		});
+		
+		JLabel lblNewLabel_3 = new JLabel("   ");
+		menuBar.add(lblNewLabel_3);
 		menuBar.add(btnNewButton);
 		
 	    frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -366,9 +381,11 @@ public class MotionText {
 	    listener = new MyKeyListener();
 		setTreeWD("display");
 		setSavedTabs(); 
+	    SpellChecker.setUserDictionaryProvider(new FileUserDictionary("/resources/")); 
+	    SpellChecker.registerDictionaries(this.getClass().getResource("/resources/"), "en");
 		frame.setFocusable(false);
 	}
-	
+
 	/**
 	 * Saves all open tabs when closed
 	 */
@@ -419,11 +436,12 @@ public class MotionText {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-				dn.getJta().addKeyListener(listener);
+				SpellChecker.register(dn.getJta());
+				dn.getJta().addKeyListener(listener);				
 				dn.getJta().setCaretPosition(0);
 				mapper.put(fileP.getFileName().toString(), dn);
-			} 
-			System.out.println("mapper size: " + mapper.size());
+				
+			}  
 		}
 	}
 
@@ -488,8 +506,7 @@ public class MotionText {
 	 */
 	public void search(JTextField textField) throws BadLocationException {
 		if (!textField.getText().contentEquals("")) {
-			for (String key : mapper.keySet()) {
-				System.out.println("Wordsearch: " + key);
+			for (String key : mapper.keySet()) { 
 				if (key.contentEquals(activeTab)) {
 					if (mapper.get(key).isSearch()) {
 						mapper.get(key).ws.removeHighlight();
@@ -517,17 +534,12 @@ public class MotionText {
 		if (index == -1) {
 			activeTab = "";
 		} else {
-			System.out.println("Tabevent");
 			String temp = activeTab;
-			System.out.println(temp);
 			activeTab = sourceTabbedPane.getTitleAt(index);
-			System.out.println(activeTab);
 			for (String key : mapper.keySet()) {
 				if (key.contentEquals(temp)) {
-					System.out.println("Temp");
 					mapper.get(key).getJta().removeKeyListener(listener);
 				} else if (key.contentEquals(activeTab)) {
-					System.out.println("Active Tab");
 					mapper.get(key).getJta().addKeyListener(listener);
 					if (mapper.get(key).search) {
 						panel_6.setVisible(state = true);
@@ -778,6 +790,7 @@ public class MotionText {
 					dn.getJta().addKeyListener(listener);
 					dn.getJta().setCaretPosition(0);
 					mapper.put(filePath.getFileName().toString(), dn);
+					SpellChecker.register(dn.getJta());
 				} else {
 					JOptionPane.showMessageDialog(frame, "No File Highlighted!", "Hay", JOptionPane.ERROR_MESSAGE);
 				}
@@ -940,16 +953,7 @@ public class MotionText {
 			if (ctl == true && s == true) {
 				saveFile(mapper.get(activeTab));
 			} else if (ctl == true && f == true) {
-				state = !state;
-				panel_6.setVisible(state);
-				
-				if(state ==  false) {
-					if(mapper.get(activeTab).search ==  true) {
-						mapper.get(activeTab).search = false; 
-						mapper.get(activeTab).ws.removeHighlight();
-					} 
-				}else
-					textField_1.requestFocusInWindow(); 
+				 toggleFind();
 			} else if (ctl == true && z == true) {
 				for (String key : mapper.keySet()) {
 					if (key.contentEquals(activeTab)) {
@@ -989,6 +993,25 @@ public class MotionText {
 				break;
 			}
 		}
+	}
+	
+	private void toggleFind() {
+
+		EventQueue.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				state = !state;
+				panel_6.setVisible(state);
+
+				if (state == false) {
+					if (mapper.get(activeTab).search == true) {
+						mapper.get(activeTab).search = false;
+						mapper.get(activeTab).ws.removeHighlight();
+					}
+				} else
+					textField_1.requestFocusInWindow();
+			}
+		});
 	}
 	
 	/**

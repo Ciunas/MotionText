@@ -5,10 +5,5 @@ I have tried to create a text editor that has certain componets that I find usef
 
 Text Editor.
 
-![alt text](screenshots/TextEditor.png "Text Editor")
+![alt text](screenshots/pic.png "Text Editor")
 
-
-
-Alternate Look.
-
-![alt text](screenshots/NotePad.png "Alternate Look")
