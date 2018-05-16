@@ -1,6 +1,7 @@
 package motiontext;
 
 import com.inet.jortho.SpellChecker;
+import com.bulenkov.darcula.DarculaLaf;
 import com.inet.jortho.FileUserDictionary;
 import java.awt.EventQueue;
 import javax.swing.JFrame;
@@ -11,6 +12,8 @@ import javax.swing.JTextField;
 import javax.swing.JScrollPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.WindowConstants;
+
 import java.awt.Color;
 import java.awt.Component;
 import javax.swing.Box;
@@ -37,11 +40,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths; 
 import java.util.HashMap;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import net.miginfocom.swing.MigLayout;
 import javax.swing.JLabel;
 import java.awt.Dimension;
 import javax.swing.JTree;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import java.awt.event.ActionListener;
@@ -58,10 +63,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JMenu;
 import java.awt.Font;
-import java.awt.GraphicsEnvironment;
-import javax.swing.border.TitledBorder;
+import java.awt.GraphicsEnvironment; 
 import javax.swing.border.LineBorder;
 import javax.swing.ImageIcon;
+import javax.swing.border.EtchedBorder;
 
 /**
  * @author ciunas
@@ -90,13 +95,32 @@ public class MotionText {
 	 */
 	public static void main(String[] args) throws InvocationTargetException, InterruptedException {
 		EventQueue.invokeAndWait(new Runnable() {
+			@Override
 			public void run() {
-				try {
-					prefs = Preferences.userRoot().node(this.getClass().getName());
-					UIManager.setLookAndFeel("com.jtattoo.plaf." + prefs.get("Theme", "noire.Noire") + "LookAndFeel");
-				} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-						| UnsupportedLookAndFeelException e1) {
-					e1.printStackTrace();
+				prefs = Preferences.userRoot().node(this.getClass().getName());
+				String temp = prefs.get("Theme", "darcula.Darcula");
+				if (temp.contentEquals("darcula.Darcula")) {
+					javax.swing.UIManager.getFont("Label.font");
+					try {
+						UIManager.setLookAndFeel(new DarculaLaf());
+					} catch (UnsupportedLookAndFeelException e) {
+						e.printStackTrace();
+					}
+				} else if (temp.contentEquals("seaglass.Seaglass")) { 
+					try {
+						UIManager.setLookAndFeel("com.seaglasslookandfeel.SeaGlassLookAndFeel");
+					} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+							| UnsupportedLookAndFeelException e) {
+						e.printStackTrace();
+					}
+				} else {
+					try {
+						UIManager.setLookAndFeel(
+								"com.jtattoo.plaf." + prefs.get("Theme", "noire.Noire") + "LookAndFeel");
+					} catch (UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException
+							| IllegalAccessException e1) {
+						e1.printStackTrace();
+					}
 				}
 				try {
 					MotionText window = new MotionText();
@@ -134,7 +158,7 @@ public class MotionText {
 		panel.add(panel_2, BorderLayout.CENTER);
 		panel_2.setLayout(new BorderLayout(0, 0));
 
-		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane = new JTabbedPane(SwingConstants.TOP);
 		tabbedPane.setBorder(null);
 		panel_2.add(tabbedPane, BorderLayout.CENTER);
 
@@ -169,8 +193,10 @@ public class MotionText {
 		lblNewLabel_1.setFont(new Font("Dialog", Font.ITALIC, 10));
 		panel_6.add(lblNewLabel_1, "flowx,cell 5 0");
 		
-		JButton btnX = new JButton("X");
+		JButton btnX = new JButton("");
+		btnX.setIcon(new ImageIcon(MotionText.class.getResource("/resources/close.png")));
 		btnX.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				toggleFind();	
 			}
@@ -180,6 +206,7 @@ public class MotionText {
 		panel_6.add(btnX, "cell 5 0");
 
 		lbl.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				for (String key : mapper.keySet()) {
 					if (key.contentEquals(activeTab) && mapper.get(key).isSearch()) {
@@ -193,6 +220,7 @@ public class MotionText {
 			}
 		});
 		btn.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				for (String key : mapper.keySet()) {
 					if (key.contentEquals(activeTab) && mapper.get(key).isSearch()) {
@@ -206,6 +234,7 @@ public class MotionText {
 			}
 		});
 		chckbxExact.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				try {
 					search(textField_1);
@@ -219,6 +248,7 @@ public class MotionText {
 		left.add(Box.createVerticalStrut(30));
 
 		ChangeListener changeListener = new ChangeListener() {
+			@Override
 			public void stateChanged(ChangeEvent changeEvent) {
 				changeEventTab(changeEvent, textField_1);
 			}
@@ -233,6 +263,7 @@ public class MotionText {
 		panel_3.setLayout(new BorderLayout(0, 0));
 
 		JPanel panel_4 = new JPanel();
+		panel_4.setBorder(new EtchedBorder(EtchedBorder.RAISED, null, null));
 		panel_3.add(panel_4, BorderLayout.CENTER);
 		panel_4.setLayout(new MigLayout("", "[grow]", "[][grow][grow]"));
 
@@ -246,6 +277,7 @@ public class MotionText {
 		JButton btnChangePwd = new JButton("Set");
 		btnChangePwd.setToolTipText("Set the location of the working directory.");
 		btnChangePwd.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent arg0) { 
 				setTreeWD("chooseFile");
 			}
@@ -265,7 +297,7 @@ public class MotionText {
 		panel_7.add(lblNewLabel, "cell 0 0 2 1");
 
 		JPanel panel_8 = new JPanel();
-		panel_8.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "File", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(51, 51, 51)));
+		panel_8.setBorder(new EtchedBorder(EtchedBorder.RAISED, null, null));
 		panel_3.add(panel_8, BorderLayout.SOUTH);
 		panel_8.setLayout(new GridLayout(2, 2, 0, 0));
 
@@ -273,6 +305,7 @@ public class MotionText {
 		panel_8.add(btnNewButton_1);
 		btnNewButton_1.setToolTipText("Open highlighted file");
 		btnNewButton_1.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				addTab(tabbedPane);
 			}
@@ -282,6 +315,7 @@ public class MotionText {
 		panel_8.add(btnNewButton_2);
 		btnNewButton_2.setToolTipText("Create a new file");
 		btnNewButton_2.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				newFile();
 			}
@@ -291,6 +325,7 @@ public class MotionText {
 		panel_8.add(btnNewFile);
 		btnNewFile.setToolTipText("Save foreground tab");
 		btnNewFile.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				saveFile(mapper.get(activeTab));
 			}
@@ -300,6 +335,7 @@ public class MotionText {
 		panel_8.add(btnNewButton_3);
 		btnNewButton_3.setToolTipText("Delete file from working directory");
 		btnNewButton_3.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				deleteFile(tabbedPane);
 			}
@@ -335,13 +371,7 @@ public class MotionText {
 			setLineEncoding();
 		});
 
-		JMenuItem mntmNewMenuItem_3 = new JMenuItem("Set Python Executable");
-		mnNewMenu.add(mntmNewMenuItem_3);
-		mntmNewMenuItem_3.setMnemonic(KeyEvent.VK_E);
-		mntmNewMenuItem_3.setToolTipText("Set theme of Text Editor");
-		mntmNewMenuItem_3.addActionListener((ActionEvent event) -> {
-			setPythonLocation();
-		});
+	
 
 		JMenuItem mntmNewMenuItem_1 = new JMenuItem("Help");
 		mntmNewMenuItem_1.setMnemonic(KeyEvent.VK_E);
@@ -350,7 +380,7 @@ public class MotionText {
 			EventQueue.invokeLater(new Runnable() {
 				@Override
 				public void run() {
-					JOptionPane.showMessageDialog(frame, "No Help For You:", "Alert", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(frame, "No Help:", "Alert", JOptionPane.ERROR_MESSAGE);
 				}
 			});
 
@@ -359,19 +389,11 @@ public class MotionText {
 
 		menuBar.add(Box.createHorizontalGlue());
 		menuBar.add(lblNewLabel_2);
-
-		JButton btnNewButton = new JButton("Python");
-		btnNewButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				python();
-			}
-		});
 		
 		JLabel lblNewLabel_3 = new JLabel("   ");
 		menuBar.add(lblNewLabel_3);
-		menuBar.add(btnNewButton);
 		
-	    frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+	    frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 	    frame.addWindowListener(new WindowAdapter() {
 	        @Override
 	        public void windowClosing(WindowEvent event) {
@@ -443,62 +465,6 @@ public class MotionText {
 				
 			}  
 		}
-	}
-
-	/**
-	 *Sets the Python executable location.
-	 */
-	private void setPythonLocation() {
-		EventQueue.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				JFileChooser f = new JFileChooser();
-				f.setDialogTitle("Specify Your Python Executable");
-				f.showSaveDialog(null);
-				if (f.getSelectedFile() != null) {
-					setOrGetPref("Python", f.getSelectedFile().toString(), "set");
-				} else {
-					return;
-				}
-			}
-		});
-	}
-
-	/**
-	 *Ability to run python code form inside window.
-	 */
-	protected void python() {
-		EventQueue.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				if (activeTab != null && !activeTab.isEmpty()
-						&& activeTab.substring(activeTab.lastIndexOf(".") + 1).contentEquals("py")) {
-					for (String key : mapper.keySet()) {
-						if (key.contentEquals(activeTab)) {
-							if (setOrGetPref("Python", null, "get").contentEquals("UnSet")) {
-								JFileChooser f = new JFileChooser();
-								f.setDialogTitle("Specify Your Python Executable");
-								f.showSaveDialog(null);
-								if (f.getSelectedFile() != null) {
-									setOrGetPref("Python", f.getSelectedFile().toString(), "set");
-								} else {
-									return;
-								}
-							}
-							saveFile(mapper.get(activeTab));
-							try {
-								@SuppressWarnings("unused")
-								RunPython rp = new RunPython(frame, mapper.get(key).location.toString(),
-										setOrGetPref("Python", null, "get"), setOrGetPref("FontSize", null, "get"),
-										setOrGetPref("FontType", null, "get"));
-							} catch (IOException | BadLocationException e1) {
-								e1.printStackTrace();
-							}
-						}
-					}
-				}
-			}
-		});
 	}
 
 	/**
@@ -640,19 +606,35 @@ public class MotionText {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				String[] values = { "Aluminium", "Smart", "Noire", "Acryl", "Aero", "Fast", "HiFi", "McWin", "Mint",
-						"Luna" };
+				String[] values = { "Aluminium", "Smart", "Noire", "Acryl", "Fast", "HiFi", "McWin", "Mint", "Seaglass",  "Darcula" };
 				Object selected = JOptionPane.showInputDialog(frame, "Choose Your  Theme", "Selection",
 						JOptionPane.DEFAULT_OPTION, null, values, setOrGetPref("Theme", null, "get")
 								.substring(setOrGetPref("Theme", null, "get").lastIndexOf(".") + 1));
 				if (selected != null) {
 					setOrGetPref("Theme", selected.toString().toLowerCase() + "." + selected.toString(), "set");
-					try {
-						UIManager.setLookAndFeel(
-								"com.jtattoo.plaf." + prefs.get("Theme", "noire.Noire") + "LookAndFeel");
-					} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-							| UnsupportedLookAndFeelException e1) {
-						e1.printStackTrace();
+					String temp = prefs.get("Theme", "darcula.Darcula");
+					if (temp.contentEquals("darcula.Darcula")) {
+						javax.swing.UIManager.getFont("Label.font");
+						try {
+							UIManager.setLookAndFeel(new DarculaLaf());
+						} catch (UnsupportedLookAndFeelException e) {
+							e.printStackTrace();
+						}
+					} else if (temp.contentEquals("seaglass.Seaglass")) { 
+						try {
+							UIManager.setLookAndFeel("com.seaglasslookandfeel.SeaGlassLookAndFeel");
+						} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+								| UnsupportedLookAndFeelException e) {
+							e.printStackTrace();
+						}
+					} else {
+						try {
+							UIManager.setLookAndFeel(
+									"com.jtattoo.plaf." + prefs.get("Theme", "noire.Noire") + "LookAndFeel");
+						} catch (UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException
+								| IllegalAccessException e1) {
+							e1.printStackTrace();
+						}
 					}
 					frame.setVisible(false);
 					SwingUtilities.updateComponentTreeUI(frame);
@@ -806,16 +788,14 @@ public class MotionText {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				Integer waitSeconds = 3;
-				lblNewLabel_2.setIcon(new ImageIcon(MotionText.class.getResource("/resources/ic_penguin.gif")));
-				Timer timer = new Timer(waitSeconds * 1000, new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						lblNewLabel_2.setText("");
-						lblNewLabel_2.setIcon(null);
-					}
-				});
-				timer.start();
+ 				lblNewLabel_2.setText(info);
+				new Timer(3000, new ActionListener(){
+					  @Override
+					public void actionPerformed(ActionEvent evt) {
+							lblNewLabel_2.setText(""); 
+					    ((Timer) evt.getSource()).stop(); 
+					  }
+					}).start();
 			}
 		});
 	}
@@ -857,6 +837,7 @@ public class MotionText {
 					}
 				});
 				MouseListener ml = new MouseAdapter() {
+					@Override
 					public void mousePressed(MouseEvent e) {
 						int selRow = tree.getRowForLocation(e.getX(), e.getY());
 						if (selRow != -1) {
@@ -884,8 +865,7 @@ public class MotionText {
 				location = i;
 				break;
 			}
-		}
-		System.out.println(location + " Location");
+		} 
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < tree.getRowCount(); i++) {
 			if (tree.isExpanded(i)) {
@@ -956,16 +936,12 @@ public class MotionText {
 				 toggleFind();
 			} else if (ctl == true && z == true) {
 				for (String key : mapper.keySet()) {
-					if (key.contentEquals(activeTab)) {
-						mapper.get(key).undo();
-					}
+					if (key.contentEquals(activeTab)) 
+						mapper.get(key).undo();					
 				}
 			} else if (ctl == true && x == true) {
-				for (String key : mapper.keySet()) {
-					if (key.contentEquals(activeTab)) {
+				for (String key : mapper.keySet()) 
 						mapper.get(key).redo();
-					}
-				}
 			}
 
 			switch (e.getKeyCode()) {
@@ -995,8 +971,11 @@ public class MotionText {
 		}
 	}
 	
+	
+	/**
+	 * Toggles the search tab
+	 */
 	private void toggleFind() {
-
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
@@ -1034,16 +1013,13 @@ public class MotionText {
 				temp = prefs.get(id, "White");
 				break;
 			case "Theme":
-				temp = prefs.get(id, "noire.Noire");
+				temp = prefs.get(id, "darcula.Darcula");
 				break;
 			case "FontType":
 				temp = prefs.get(id, "Calibri");
 				break;
 			case "LineEncoding":
 				temp = prefs.get(id, "No");
-				break;
-			case "Python":
-				temp = prefs.get(id, "UnSet");
 				break;
 			case "StartTabs":
 				temp = prefs.get(id, "");
